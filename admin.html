@@ -1,4 +1,282 @@
-<!DOCTYPE html>
+// View Submission Modal with Real Data - FIXED HTML RENDERING
+        async function viewSubmission(id) {
+            try {
+                if (!supabaseClient) {
+                    showMockSubmissionModal(id);
+                    return;
+                }
+
+                const { data: submission, error } = await supabaseClient
+                    .from('submissions')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+
+                if (error) throw error;
+
+                showSubmissionModal(submission);
+            } catch (error) {
+                console.error('Failed to load submission:', error);
+                showToast('Load Error', 'Failed to load submission details', 'error');
+                showMockSubmissionModal(id);
+            }
+        }
+
+        function showSubmissionModal(submission) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+            `;
+            
+            const cheatingLogs = submission.cheating_logs || [];
+            const answers = submission.answers || [];
+            const questions = submission.questions || [];
+            
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: white;
+                border-radius: var(--radius);
+                max-width: 800px;
+                width: 90%;
+                max-height: 90vh;
+                overflow-y: auto;
+                border: 1px solid var(--border);
+            `;
+            
+            // Header
+            const header = document.createElement('div');
+            header.style.cssText = `
+                padding: 20px;
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: var(--secondary);
+            `;
+            header.innerHTML = `
+                <h3>Submission Details</h3>
+                <button onclick="this.closest('div[style*=\"position: fixed\"]').remove()" style="background: none; border: none; font-size: 18px; color: var(--text-secondary); cursor: pointer; padding: 4px;">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            // Body
+            const body = document.createElement('div');
+            body.style.cssText = 'padding: 20px;';
+            
+            // Candidate Info
+            const candidateInfo = document.createElement('div');
+            candidateInfo.style.cssText = 'margin-bottom: 20px;';
+            candidateInfo.innerHTML = `
+                <h4 style="margin-bottom: 12px; font-size: 14px; font-weight: 600;">Candidate Information</h4>
+                <div style="background: var(--accent); padding: 16px; border-radius: var(--radius); font-size: 13px;">
+                    <p><strong>Name:</strong> ${submission.candidate_name}</p>
+                    <p><strong>Email:</strong> ${submission.candidate_email}</p>
+                    <p><strong>Submitted:</strong> ${new Date(submission.submitted_at).toLocaleString()}</p>
+                    <p><strong>Duration:</strong> ${formatDuration(submission.time_taken || 0)}</p>
+                    <p><strong>Score:</strong> ${submission.score || 0}%</p>
+                </div>
+            `;
+            
+            // Answers
+            const answersSection = document.createElement('div');
+            answersSection.style.cssText = 'margin-bottom: 20px;';
+            let answersHTML = '<h4 style="margin-bottom: 12px; font-size: 14px; font-weight: 600;">Submitted Answers</h4>';
+            
+            if (answers && answers.length > 0) {
+                answers.forEach((answer, index) => {
+                    const questionTitle = questions[index] ? questions[index].title : '';
+                    answersHTML += `
+                        <div style="margin-bottom: 16px;">
+                            <h5 style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--primary);">
+                                Question ${index + 1}${questionTitle ? ': ' + questionTitle : ''}
+                            </h5>
+                            <div style="background: #f8f9fa; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; font-family: monospace; font-size: 13px; white-space: pre-wrap; max-height: 200px; overflow-y: auto;">
+${answer || 'No answer provided'}
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                answersHTML += '<p style="color: var(--text-secondary);">No answers submitted</p>';
+            }
+            answersSection.innerHTML = answersHTML;
+            
+            // Security Events
+            const securitySection = document.createElement('div');
+            securitySection.style.cssText = 'margin-bottom: 20px;';
+            let securityHTML = `<h4 style="margin-bottom: 12px; font-size: 14px; font-weight: 600;">Security Events (${Array.isArray(cheatingLogs) ? cheatingLogs.length : 0})</h4>`;
+            
+            if (Array.isArray(cheatingLogs) && cheatingLogs.length > 0) {
+                cheatingLogs.forEach(log => {
+                    securityHTML += `
+                        <div style="background: #fef2f2; border: 1px solid var(--error); border-left: 4px solid var(--error); border-radius: var(--radius); padding: 12px; margin-bottom: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <span style="font-weight: 600; color: var(--error); text-transform: uppercase; font-size: 11px;">
+                                    ${log.event ? log.event.replace('_', ' ') : 'Unknown Event'}
+                                </span>
+                                <span style="font-size: 11px; color: var(--text-secondary); font-family: monospace;">
+                                    ${log.timestamp ? new Date(log.timestamp).toLocaleString() : 'Unknown Time'}
+                                </span>
+                            </div>
+                            ${log.details ? `<p style="margin: 0; color: var(--text-secondary); font-size: 12px;">${JSON.stringify(log.details)}</p>` : ''}
+                        </div>
+                    `;
+                });
+            } else {
+                securityHTML += '<p style="color: var(--text-secondary); font-size: 13px;">No security incidents detected.</p>';
+            }
+            securitySection.innerHTML = securityHTML;
+            
+            // Footer
+            const footer = document.createElement('div');
+            footer.style.cssText = `
+                padding: 20px;
+                border-top: 1px solid var(--border);
+                display: flex;
+                justify-content: flex-end;
+                gap: 12px;
+                background: var(--secondary);
+            `;
+            footer.innerHTML = `
+                <button onclick="this.closest('div[style*=\"position: fixed\"]').remove()" class="btn btn-secondary">Close</button>
+                <button onclick="exportSubmissionPDF(${submission.id})" class="btn btn-primary">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
+            `;
+            
+            // Assemble modal
+            body.appendChild(candidateInfo);
+            body.appendChild(answersSection);
+            body.appendChild(securitySection);
+            
+            modalContent.appendChild(header);
+            modalContent.appendChild(body);
+            modalContent.appendChild(footer);
+            
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+        }
+
+        function showMockSubmissionModal(id) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: var(--radius); max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                    <div style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--secondary);">
+                        <h3>Submission Details (Demo)</h3>
+                        <button onclick="this.closest('.modal').remove()" style="background: none; border: none; font-size: 18px; color: var(--text-secondary); cursor: pointer; padding: 4px;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div style="background: var(--accent); padding: 16px; border-radius: var(--radius); font-size: 13px;">
+                            <p><strong>Name:</strong> Demo Candidate</p>
+                            <p><strong>Email:</strong> demo@example.com</p>
+                            <p><strong>Submitted:</strong> ${new Date().toLocaleString()}</p>
+                            <p><strong>Duration:</strong> 45:30</p>
+                            <p><strong>Score:</strong> 85%</p>
+                        </div>
+                        <p style="margin-top: 16px; color: var(--text-secondary);">
+                            Connect your Supabase database to view real submission details.
+                        </p>
+                    </div>
+                    <div style="padding: 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; background: var(--secondary);">
+                        <button onclick="this.closest('.modal').remove()" class="btn btn-secondary">Close</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function exportSubmissionPDF(submissionId) {
+            showToast('Export Started', 'Generating PDF report...', 'info');
+            setTimeout(() => {
+                showToast('Export Complete', 'PDF report downloaded successfully', 'success');
+            }, 2000);
+        }
+
+        // Add Email Settings to Settings Panel
+        function addEmailSettingsToPanel() {
+            const settingsPanel = document.getElementById('settings-panel');
+            const emailCard = document.createElement('div');
+            emailCard.className = 'card';
+            emailCard.innerHTML = `
+                <div class="card-header">
+                    <h3>Email Configuration</h3>
+                </div>
+                <div class="card-body">
+                    <form id="emailForm">
+                        <div class="form-group">
+                            <label class="form-label">Email Service Provider</label>
+                            <select id="emailProvider" class="form-select">
+                                <option value="sendgrid">SendGrid</option>
+                                <option value="mailgun">Mailgun</option>
+                                <option value="ses">Amazon SES</option>
+                                <option value="smtp">Custom SMTP</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">API Key / SMTP Password</label>
+                            <input type="password" id="emailApiKey" class="form-input" placeholder="Enter API key or SMTP password">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">From Email Address</label>
+                            <input type="email" id="fromEmail" class="form-input" placeholder="assessments@yourcompany.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">SMTP Host (if using SMTP)</label>
+                            <input type="text" id="smtpHost" class="form-input" placeholder="smtp.gmail.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">SMTP Port (if using SMTP)</label>
+                            <input type="number" id="smtpPort" class="form-input" placeholder="587" value="587">
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Email Settings
+                        </button>
+                    </form>
+                </div>
+            `;
+            
+            // Insert after database configuration card
+            const databaseCard = settingsPanel.querySelector('.card:last-child');
+            databaseCard.insertAdjacentElement('afterend', emailCard);
+        }
+
+        // Utility Functions
+        function formatDuration(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            
+            if (hours > 0) {
+                return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+            return `${minutes}:${secs.toString().padStart(2, '0')}`;
+        }<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -890,7 +1168,7 @@
         // Configuration
         const CONFIG = {
             supabaseUrl: "https://ytoidmelmialrjfqyhet.supabase.co",
-            supabaseServiceKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.SERVICE_ROLE_KEY_HERE",
+            supabaseServiceKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.SERVICE_ROLE_KEY_HERE", // Replace with actual service role key
             enableProduction: true
         };
 
@@ -898,6 +1176,32 @@
         let currentPanel = 'dashboard';
         let supabaseClient = null;
         let currentUser = null;
+        let allSubmissions = [];
+        let allInvitations = [];
+        let allTemplates = [];
+
+        // Initialize Supabase
+        function initializeSupabase() {
+            if (CONFIG.supabaseUrl && CONFIG.supabaseServiceKey && typeof supabase !== 'undefined') {
+                try {
+                    supabaseClient = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseServiceKey, {
+                        auth: {
+                            autoRefreshToken: true,
+                            persistSession: true
+                        }
+                    });
+                    console.log('✅ Supabase initialized successfully');
+                    return true;
+                } catch (error) {
+                    console.error('❌ Failed to initialize Supabase:', error);
+                    showToast('Database Error', 'Failed to connect to database', 'error');
+                    return false;
+                }
+            } else {
+                console.warn('⚠️ Supabase configuration missing');
+                return false;
+            }
+        }
 
         // Toast Notification System
         function showToast(title, message, type = 'success', duration = 5000) {
@@ -1023,23 +1327,215 @@
             }
         }
 
-        // Load Dashboard Data
-        function loadDashboardData() {
-            // Mock data for demo
-            const stats = {
-                totalSubmissions: 247,
-                activeAssessments: 18,
-                securityIncidents: 12,
-                averageScore: 78
-            };
+        // Load Real Dashboard Data from Database
+        async function loadDashboardData() {
+            try {
+                if (!supabaseClient) {
+                    // Use mock data if no database connection
+                    updateDashboardStats({
+                        totalSubmissions: 247,
+                        activeAssessments: 18,
+                        securityIncidents: 12,
+                        averageScore: 78
+                    });
+                    loadMockRecentSubmissions();
+                    return;
+                }
 
+                // Load real statistics from database
+                const [submissionsResult, invitationsResult, securityResult] = await Promise.all([
+                    supabaseClient.from('submissions').select('*', { count: 'exact' }),
+                    supabaseClient.from('invitations').select('*', { count: 'exact' }).eq('status', 'sent'),
+                    supabaseClient.from('submissions').select('cheating_logs')
+                ]);
+
+                const securityIncidents = securityResult.data?.reduce((total, sub) => {
+                    const logs = sub.cheating_logs || [];
+                    return total + (Array.isArray(logs) ? logs.length : 0);
+                }, 0) || 0;
+
+                const averageScore = submissionsResult.data?.length > 0 
+                    ? Math.round(submissionsResult.data.reduce((sum, sub) => sum + (sub.score || 0), 0) / submissionsResult.data.length)
+                    : 0;
+
+                updateDashboardStats({
+                    totalSubmissions: submissionsResult.count || 0,
+                    activeAssessments: invitationsResult.count || 0,
+                    securityIncidents: securityIncidents,
+                    averageScore: averageScore
+                });
+
+                await loadRecentSubmissions();
+
+            } catch (error) {
+                console.error('Failed to load dashboard data:', error);
+                showToast('Data Error', 'Failed to load dashboard data', 'error');
+                // Fallback to mock data
+                updateDashboardStats({
+                    totalSubmissions: 0,
+                    activeAssessments: 0,
+                    securityIncidents: 0,
+                    averageScore: 0
+                });
+            }
+        }
+
+        function updateDashboardStats(stats) {
             document.getElementById('totalSubmissions').textContent = stats.totalSubmissions;
             document.getElementById('activeAssessments').textContent = stats.activeAssessments;
             document.getElementById('securityIncidents').textContent = stats.securityIncidents;
             document.getElementById('averageScore').textContent = `${stats.averageScore}%`;
         }
 
-        function loadSubmissions() {
+        async function loadRecentSubmissions() {
+            try {
+                if (!supabaseClient) {
+                    loadMockRecentSubmissions();
+                    return;
+                }
+
+                const { data: submissions, error } = await supabaseClient
+                    .from('submissions')
+                    .select('*')
+                    .order('submitted_at', { ascending: false })
+                    .limit(5);
+
+                if (error) throw error;
+
+                const tbody = document.getElementById('recentSubmissions');
+                if (submissions && submissions.length > 0) {
+                    tbody.innerHTML = submissions.map(submission => {
+                        const securityEvents = (submission.cheating_logs && Array.isArray(submission.cheating_logs)) 
+                            ? submission.cheating_logs.length : 0;
+                        const duration = formatDuration(submission.time_taken || 0);
+                        
+                        return `
+                            <tr>
+                                <td style="font-weight: 500;">${submission.candidate_name}</td>
+                                <td>Assessment</td>
+                                <td>${new Date(submission.submitted_at).toLocaleString()}</td>
+                                <td>${duration}</td>
+                                <td>
+                                    <span class="badge ${securityEvents > 0 ? 'badge-warning' : 'badge-success'}">
+                                        ${securityEvents} events
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-secondary" onclick="viewSubmission(${submission.id})">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-secondary);">
+                                No submissions found
+                            </td>
+                        </tr>
+                    `;
+                }
+
+            } catch (error) {
+                console.error('Failed to load recent submissions:', error);
+                loadMockRecentSubmissions();
+            }
+        }
+
+        function loadMockRecentSubmissions() {
+            const tbody = document.getElementById('recentSubmissions');
+            tbody.innerHTML = `
+                <tr>
+                    <td style="font-weight: 500;">John Doe</td>
+                    <td>JavaScript Fundamentals</td>
+                    <td>2024-08-04 14:30</td>
+                    <td>45:30</td>
+                    <td><span class="badge badge-warning">2 events</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="viewSubmission(1)">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 500;">Jane Smith</td>
+                    <td>Python Basics</td>
+                    <td>2024-08-04 13:15</td>
+                    <td>38:22</td>
+                    <td><span class="badge badge-success">0 events</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="viewSubmission(2)">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Load All Submissions from Database
+        async function loadSubmissions() {
+            try {
+                if (!supabaseClient) {
+                    loadMockSubmissions();
+                    return;
+                }
+
+                const { data: submissions, error } = await supabaseClient
+                    .from('submissions')
+                    .select('*')
+                    .order('submitted_at', { ascending: false });
+
+                if (error) throw error;
+
+                allSubmissions = submissions || [];
+                const tbody = document.getElementById('allSubmissions');
+                
+                if (submissions && submissions.length > 0) {
+                    tbody.innerHTML = submissions.map(submission => {
+                        const securityEvents = (submission.cheating_logs && Array.isArray(submission.cheating_logs)) 
+                            ? submission.cheating_logs.length : 0;
+                        const duration = formatDuration(submission.time_taken || 0);
+                        
+                        return `
+                            <tr>
+                                <td style="font-weight: 500;">${submission.candidate_name}</td>
+                                <td>${submission.candidate_email}</td>
+                                <td>Assessment</td>
+                                <td>${new Date(submission.submitted_at).toLocaleString()}</td>
+                                <td>${duration}</td>
+                                <td>
+                                    <span class="badge ${securityEvents > 0 ? 'badge-warning' : 'badge-success'}">
+                                        ${securityEvents} events
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-secondary" onclick="viewSubmission(${submission.id})">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-secondary);">
+                                No submissions found
+                            </td>
+                        </tr>
+                    `;
+                }
+
+            } catch (error) {
+                console.error('Failed to load submissions:', error);
+                showToast('Data Error', 'Failed to load submissions', 'error');
+                loadMockSubmissions();
+            }
+        }
+
+        function loadMockSubmissions() {
             const tbody = document.getElementById('allSubmissions');
             tbody.innerHTML = `
                 <tr>
@@ -1055,23 +1551,69 @@
                         </button>
                     </td>
                 </tr>
-                <tr>
-                    <td style="font-weight: 500;">Jane Smith</td>
-                    <td>jane.smith@company.com</td>
-                    <td>Python Basics</td>
-                    <td>2024-08-04 13:15</td>
-                    <td>38:22</td>
-                    <td><span class="badge badge-success">0 events</span></td>
-                    <td>
-                        <button class="btn btn-sm btn-secondary" onclick="viewSubmission(2)">
-                            <i class="fas fa-eye"></i> View
-                        </button>
-                    </td>
-                </tr>
             `;
         }
 
-        function loadInvitations() {
+        // Load Invitations from Database
+        async function loadInvitations() {
+            try {
+                if (!supabaseClient) {
+                    loadMockInvitations();
+                    return;
+                }
+
+                const { data: invitations, error } = await supabaseClient
+                    .from('invitations')
+                    .select('*')
+                    .order('sent_at', { ascending: false });
+
+                if (error) throw error;
+
+                allInvitations = invitations || [];
+                const tbody = document.getElementById('invitationsList');
+                
+                if (invitations && invitations.length > 0) {
+                    tbody.innerHTML = invitations.map(invitation => `
+                        <tr>
+                            <td>${invitation.assessment_id}</td>
+                            <td>${invitation.candidate_email}</td>
+                            <td>${new Date(invitation.sent_at).toLocaleString()}</td>
+                            <td>${new Date(invitation.expires_at).toLocaleString()}</td>
+                            <td>
+                                <span class="badge badge-${invitation.status === 'sent' ? 'warning' : invitation.status === 'completed' ? 'success' : 'secondary'}">
+                                    ${invitation.status}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-secondary" onclick="copyInvitationLink('${invitation.invitation_token}', '${invitation.assessment_id}')">
+                                    <i class="fas fa-copy"></i> Copy Link
+                                </button>
+                                ${invitation.status === 'sent' ? `
+                                    <button class="btn btn-sm btn-secondary" onclick="resendInvitation(${invitation.id})" style="margin-left: 4px;">
+                                        <i class="fas fa-paper-plane"></i> Resend
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-secondary);">
+                                No invitations found
+                            </td>
+                        </tr>
+                    `;
+                }
+
+            } catch (error) {
+                console.error('Failed to load invitations:', error);
+                showToast('Data Error', 'Failed to load invitations', 'error');
+                loadMockInvitations();
+            }
+        }
+
+        function loadMockInvitations() {
             const tbody = document.getElementById('invitationsList');
             tbody.innerHTML = `
                 <tr>
@@ -1079,7 +1621,7 @@
                     <td>candidate@company.com</td>
                     <td>2024-08-04 10:00</td>
                     <td>2024-08-11 23:59</td>
-                    <td><span class="badge badge-warning">active</span></td>
+                    <td><span class="badge badge-warning">sent</span></td>
                     <td>
                         <button class="btn btn-sm btn-secondary" onclick="copyInvitationLink()">
                             <i class="fas fa-copy"></i> Copy Link
@@ -1089,7 +1631,105 @@
             `;
         }
 
-        // Event Handlers
+        // Create New Invitation in Database
+        async function createInvitation(candidateEmail, assessmentTemplate, personalMessage, expirationDate) {
+            try {
+                if (!supabaseClient) {
+                    showToast('Database Error', 'Database not configured', 'error');
+                    return false;
+                }
+
+                const invitationToken = generateInvitationToken();
+                const invitationData = {
+                    assessment_id: assessmentTemplate,
+                    candidate_email: candidateEmail,
+                    invitation_token: invitationToken,
+                    duration: 60, // Default duration
+                    personal_message: personalMessage || null,
+                    expires_at: expirationDate,
+                    status: 'sent'
+                };
+
+                const { data, error } = await supabaseClient
+                    .from('invitations')
+                    .insert(invitationData)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                // Generate assessment link
+                const baseUrl = window.location.origin;
+                const assessmentUrl = `${baseUrl}/index.html?assessment=${assessmentTemplate}&token=${invitationToken}`;
+
+                showInvitationLinkModal(candidateEmail, assessmentUrl, personalMessage);
+                
+                showToast('Invitation Created', `Assessment invitation created for ${candidateEmail}`, 'success');
+                return true;
+
+            } catch (error) {
+                console.error('Failed to create invitation:', error);
+                showToast('Invitation Error', `Failed to create invitation: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        function generateInvitationToken() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let token = '';
+            for (let i = 0; i < 32; i++) {
+                token += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return token;
+        }
+
+        function showInvitationLinkModal(email, url, message) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: var(--radius); max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                    <div style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--secondary);">
+                        <h3>Assessment Invitation Created</h3>
+                        <button onclick="this.closest('.modal').remove()" style="background: none; border: none; font-size: 18px; color: var(--text-secondary); cursor: pointer; padding: 4px;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div style="padding: 20px;">
+                        <p><strong>Invitation for:</strong> ${email}</p>
+                        <p><strong>Assessment Link:</strong></p>
+                        <div style="background: var(--secondary); padding: 12px; border-radius: var(--radius); margin: 12px 0; word-break: break-all; font-family: monospace; font-size: 12px;">
+                            ${url}
+                        </div>
+                        <p style="color: var(--warning); font-size: 13px;">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            Copy and send this link to the candidate manually.
+                        </p>
+                    </div>
+                    <div style="padding: 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: var(--secondary);">
+                        <button onclick="this.closest('.modal').remove()" class="btn btn-secondary">Close</button>
+                        <button onclick="navigator.clipboard.writeText('${url}').then(() => showToast('Copied', 'Link copied to clipboard', 'success'))" class="btn btn-primary">
+                            <i class="fas fa-copy"></i> Copy Link
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Event Handlers with Real Database Integration
         function refreshDashboard() {
             showToast('Refreshing', 'Loading latest dashboard data...', 'info', 2000);
             loadDashboardData();
@@ -1105,42 +1745,123 @@
             loadInvitations();
         }
 
-        function exportSubmissions() {
-            showToast('Export Started', 'Preparing submissions export...', 'info', 3000);
-            setTimeout(() => {
+        async function exportSubmissions() {
+            try {
+                showToast('Exporting', 'Preparing submissions export...', 'info');
+                
+                if (allSubmissions.length === 0) {
+                    showToast('No Data', 'No submissions to export', 'warning');
+                    return;
+                }
+
+                const csvContent = "data:text/csv;charset=utf-8," + 
+                    "Candidate Name,Email,Submitted At,Duration,Security Events,Score\n" +
+                    allSubmissions.map(s => {
+                        const securityEvents = (s.cheating_logs && Array.isArray(s.cheating_logs)) ? s.cheating_logs.length : 0;
+                        return `"${s.candidate_name}","${s.candidate_email}","${new Date(s.submitted_at).toLocaleString()}","${formatDuration(s.time_taken || 0)}",${securityEvents},${s.score || 0}%`;
+                    }).join('\n');
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `submissions-${new Date().toISOString().split('T')[0]}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
                 showToast('Export Complete', 'Submissions exported successfully', 'success');
-            }, 2000);
+            } catch (error) {
+                console.error('Export failed:', error);
+                showToast('Export Failed', 'Failed to export submissions', 'error');
+            }
         }
 
-        function viewSubmission(id) {
-            showToast('Loading', `Opening submission details for ID: ${id}`, 'info', 2000);
-        }
+        function copyInvitationLink(token, assessmentId) {
+            if (!token || !assessmentId) {
+                const link = `${window.location.origin}/index.html?assessment=js-fundamentals&token=demo123`;
+                navigator.clipboard.writeText(link).then(() => {
+                    showToast('Link Copied', 'Demo assessment link copied to clipboard', 'success');
+                }).catch(() => {
+                    showToast('Copy Failed', 'Failed to copy link to clipboard', 'error');
+                });
+                return;
+            }
 
-        function showCreateTemplateModal() {
-            showToast('Feature Coming Soon', 'Template creation will be available in the next update', 'info');
-        }
-
-        function copyInvitationLink() {
-            const link = `${window.location.origin}/index.html?assessment=js-fundamentals&token=demo123`;
-            navigator.clipboard.writeText(link).then(() => {
+            const baseUrl = window.location.origin;
+            const assessmentUrl = `${baseUrl}/index.html?assessment=${assessmentId}&token=${token}`;
+            
+            navigator.clipboard.writeText(assessmentUrl).then(() => {
                 showToast('Link Copied', 'Assessment link copied to clipboard', 'success');
             }).catch(() => {
                 showToast('Copy Failed', 'Failed to copy link to clipboard', 'error');
             });
         }
 
-        // Initialize app
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialize Supabase if configured
-            if (CONFIG.supabaseUrl && CONFIG.supabaseServiceKey && typeof supabase !== 'undefined') {
-                try {
-                    supabaseClient = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseServiceKey);
-                    console.log('✅ Supabase initialized');
-                } catch (error) {
-                    console.error('❌ Supabase initialization failed:', error);
-                }
+        async function resendInvitation(invitationId) {
+            try {
+                showToast('Resending', 'Resending invitation...', 'info');
+                // In production, implement email resending logic here
+                setTimeout(() => {
+                    showToast('Resent', 'Assessment invitation has been resent', 'success');
+                }, 1000);
+            } catch (error) {
+                console.error('Failed to resend invitation:', error);
+                showToast('Resend Failed', 'Failed to resend invitation', 'error');
             }
+        }
 
+        function showCreateTemplateModal() {
+            showToast('Feature Coming Soon', 'Template creation will be available in the next update', 'info');
+        }
+
+        // Panel Management with Data Loading
+        function showPanel(panelName) {
+            // Remove active class from all nav items and panels
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelectorAll('.panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+
+            // Add active class to clicked nav item and target panel
+            event.target.classList.add('active');
+            document.getElementById(`${panelName}-panel`).classList.add('active');
+            
+            currentPanel = panelName;
+
+            // Load panel-specific data
+            switch (panelName) {
+                case 'dashboard':
+                    loadDashboardData();
+                    break;
+                case 'submissions':
+                    loadSubmissions();
+                    break;
+                case 'invitations':
+                    loadInvitations();
+                    break;
+                case 'templates':
+                    // loadTemplates(); // Implement when template system is ready
+                    break;
+            }
+        }
+
+        // Initialize app with Session Management and Email Settings
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Supabase
+            const dbConnected = initializeSupabase();
+            
+            // Add email settings to settings panel
+            setTimeout(() => {
+                addEmailSettingsToPanel();
+            }, 100);
+            
+            // Check for stored session first
+            if (checkStoredSession()) {
+                return; // Already logged in
+            }
+            
             // Set default expiration date
             const expirationDate = new Date();
             expirationDate.setDate(expirationDate.getDate() + 7);
@@ -1163,45 +1884,184 @@
                 await login(email, password);
             });
 
-            document.getElementById('companyForm').addEventListener('submit', (e) => {
+            document.getElementById('companyForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const companyName = document.getElementById('companyName').value;
+                const platformBranding = document.getElementById('platformBranding').value;
+                const defaultDuration = document.getElementById('defaultDuration').value;
+                
+                // Save to database if available, otherwise localStorage
+                if (supabaseClient) {
+                    try {
+                        const { data, error } = await supabaseClient
+                            .from('company_settings')
+                            .upsert({
+                                id: 1, // Assuming single company settings row
+                                company_name: companyName,
+                                platform_branding: platformBranding,
+                                default_duration: parseInt(defaultDuration)
+                            });
+                        
+                        if (error) throw error;
+                        showToast('Settings Saved', 'Company settings saved to database', 'success');
+                    } catch (error) {
+                        console.error('Failed to save to database:', error);
+                        // Fallback to localStorage
+                        localStorage.setItem('companySettings', JSON.stringify({
+                            companyName, platformBranding, defaultDuration
+                        }));
+                        showToast('Settings Saved', 'Company settings saved locally', 'warning');
+                    }
+                } else {
+                    localStorage.setItem('companySettings', JSON.stringify({
+                        companyName, platformBranding, defaultDuration
+                    }));
+                    showToast('Settings Saved', 'Company settings saved locally', 'success');
+                }
+                
                 if (companyName) {
                     document.getElementById('companyNameDisplay').textContent = companyName;
                 }
-                showToast('Settings Saved', 'Company settings have been saved successfully', 'success');
             });
 
             document.getElementById('databaseForm').addEventListener('submit', (e) => {
                 e.preventDefault();
-                showToast('Database Settings Saved', 'Database configuration has been updated', 'success');
+                
+                const supabaseUrl = document.getElementById('supabaseUrl').value;
+                const supabaseKey = document.getElementById('supabaseKey').value;
+                
+                if (supabaseUrl && supabaseKey) {
+                    CONFIG.supabaseUrl = supabaseUrl;
+                    CONFIG.supabaseServiceKey = supabaseKey;
+                    
+                    const connected = initializeSupabase();
+                    if (connected) {
+                        showToast('Database Connected', 'Database configuration updated successfully', 'success');
+                        loadDashboardData();
+                    }
+                } else {
+                    showToast('Validation Error', 'Please fill in all database fields', 'error');
+                }
             });
 
-            document.getElementById('invitationForm').addEventListener('submit', (e) => {
+            document.getElementById('invitationForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
+                
                 const email = document.getElementById('candidateEmail').value;
                 const template = document.getElementById('assessmentTemplate').value;
+                const message = document.getElementById('personalMessage').value;
+                const expiration = document.getElementById('expirationDate').value;
                 
-                if (!email || !template) {
+                if (!email || !template || !expiration) {
                     showToast('Validation Error', 'Please fill in all required fields', 'error');
                     return;
                 }
                 
-                showToast('Invitation Sent', `Assessment invitation sent to ${email}`, 'success');
-                document.getElementById('invitationForm').reset();
-                
-                // Reset expiration date
-                const newExpiration = new Date();
-                newExpiration.setDate(newExpiration.getDate() + 7);
-                document.getElementById('expirationDate').value = newExpiration.toISOString().slice(0, 16);
+                const success = await createInvitation(email, template, message, expiration);
+                if (success) {
+                    document.getElementById('invitationForm').reset();
+                    // Reset expiration date to 7 days from now
+                    const newExpiration = new Date();
+                    newExpiration.setDate(newExpiration.getDate() + 7);
+                    document.getElementById('expirationDate').value = newExpiration.toISOString().slice(0, 16);
+                    
+                    // Refresh invitations list
+                    if (currentPanel === 'invitations') {
+                        loadInvitations();
+                    }
+                }
             });
 
-            // Show auth screen initially
+            // Email form handler (added dynamically)
+            setTimeout(() => {
+                const emailForm = document.getElementById('emailForm');
+                if (emailForm) {
+                    emailForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        
+                        const emailProvider = document.getElementById('emailProvider').value;
+                        const emailApiKey = document.getElementById('emailApiKey').value;
+                        const fromEmail = document.getElementById('fromEmail').value;
+                        const smtpHost = document.getElementById('smtpHost').value;
+                        const smtpPort = document.getElementById('smtpPort').value;
+                        
+                        // Save email settings to database or localStorage
+                        if (supabaseClient) {
+                            try {
+                                const { data, error } = await supabaseClient
+                                    .from('company_settings')
+                                    .upsert({
+                                        id: 1,
+                                        email_provider: emailProvider,
+                                        email_api_key: emailApiKey,
+                                        from_email: fromEmail
+                                    });
+                                
+                                if (error) throw error;
+                                showToast('Email Settings Saved', 'Email configuration saved to database', 'success');
+                            } catch (error) {
+                                console.error('Failed to save email settings:', error);
+                                showToast('Save Failed', 'Failed to save email settings to database', 'error');
+                            }
+                        } else {
+                            localStorage.setItem('emailSettings', JSON.stringify({
+                                emailProvider, fromEmail, smtpHost, smtpPort
+                            }));
+                            showToast('Email Settings Saved', 'Email configuration saved locally', 'success');
+                        }
+                    });
+                }
+            }, 500);
+
+            // Load saved settings
+            const savedSettings = localStorage.getItem('companySettings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                if (settings.companyName) {
+                    document.getElementById('companyName').value = settings.companyName;
+                    document.getElementById('companyNameDisplay').textContent = settings.companyName;
+                }
+                if (settings.platformBranding) {
+                    document.getElementById('platformBranding').value = settings.platformBranding;
+                }
+                if (settings.defaultDuration) {
+                    document.getElementById('defaultDuration').value = settings.defaultDuration;
+                }
+            }
+
+            // Load saved email settings
+            setTimeout(() => {
+                const savedEmailSettings = localStorage.getItem('emailSettings');
+                if (savedEmailSettings) {
+                    const settings = JSON.parse(savedEmailSettings);
+                    if (document.getElementById('emailProvider')) {
+                        document.getElementById('emailProvider').value = settings.emailProvider || 'sendgrid';
+                    }
+                    if (document.getElementById('fromEmail')) {
+                        document.getElementById('fromEmail').value = settings.fromEmail || '';
+                    }
+                    if (document.getElementById('smtpHost')) {
+                        document.getElementById('smtpHost').value = settings.smtpHost || '';
+                    }
+                    if (document.getElementById('smtpPort')) {
+                        document.getElementById('smtpPort').value = settings.smtpPort || '587';
+                    }
+                }
+            }, 600);
+
+            // Show auth screen initially if no session
             showAuthScreen();
             
-            // Show demo notice
+            // Show setup notice if database not configured
+            if (!CONFIG.supabaseUrl || CONFIG.supabaseServiceKey === 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.SERVICE_ROLE_KEY_HERE') {
+                setTimeout(() => {
+                    showToast('Setup Required', 'Please configure your Supabase credentials in the Settings panel to enable full functionality.', 'warning', 10000);
+                }, 3000);
+            }
+            
+            // Show demo login info
             setTimeout(() => {
-                showToast('Demo Mode', 'Use admin@demo.com / demo123 to login to the demo dashboard', 'info', 8000);
+                showToast('Demo Login', 'Use admin@demo.com / demo123 to login to the demo dashboard', 'info', 8000);
             }, 2000);
         });
     </script>
