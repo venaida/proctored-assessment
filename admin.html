@@ -144,7 +144,11 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const CONFIG = { supabaseUrl: "https://ytoidmelmialrjfqyhet.supabase.co", supabaseServiceKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0b2lkbWVsbWlhbHJqZnF5aGV0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTY4NzA2MjU0MiwiZXhwIjoyMDAyNjM4NTQyfQ.PLACEHOLDER_KEY" };
+        // CONFIG: Replace with your actual Supabase keys
+        const CONFIG = { 
+            supabaseUrl: "https://ytoidmelmialrjfqyhet.supabase.co", 
+            supabaseServiceKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0b2lkbWVsbWlhbHJqZnF5aGV0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTY4NzA2MjU0MiwiZXhwIjoyMDAyNjM4NTQyfQ.SoE9K21U9U1U82r2GA9i68gH_S5MASEI4h0e5mJg0yc" 
+        };
         let supabaseClient = null;
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -158,6 +162,8 @@
                 document.getElementById('supabaseUrl').value = storedUrl;
                 document.getElementById('supabaseKey').value = storedKey;
                 initializeSupabase(storedUrl, storedKey);
+            } else {
+                 initializeSupabase(CONFIG.supabaseUrl, CONFIG.supabaseServiceKey);
             }
             showAuthScreen();
         });
@@ -221,12 +227,21 @@
                 return;
             }
             loadDashboardData();
-            loadSubmissions();
-            loadInvitations();
-            loadTemplates();
         }
 
-        async function loadDashboardData() { /* Full logic to load stats */ }
+        async function loadDashboardData() {
+            if (!supabaseClient) return;
+            const { data: subs, count: totalSubmissions } = await supabaseClient.from('submissions').select('*', { count: 'exact', head: true });
+            const { count: activeAssessments } = await supabaseClient.from('invitations').select('*', { count: 'exact', head: true }).eq('status', 'sent');
+            document.getElementById('totalSubmissions').textContent = totalSubmissions || 0;
+            document.getElementById('activeAssessments').textContent = activeAssessments || 0;
+            
+            const { data: recent, error } = await supabaseClient.from('submissions').select('*').order('submitted_at', { ascending: false }).limit(5);
+            const tbody = document.getElementById('recentSubmissions');
+            if (error || !recent) return tbody.innerHTML = `<tr><td colspan="4">Error loading data.</td></tr>`;
+            tbody.innerHTML = recent.map(sub => `<tr><td>${sub.candidate_name}</td><td>${sub.assessment_id || 'N/A'}</td><td>${new Date(sub.submitted_at).toLocaleString()}</td><td><button class="btn btn-sm btn-secondary" onclick="viewSubmission(${sub.id})"><i class="fas fa-eye"></i> View</button></td></tr>`).join('');
+        }
+        
         async function loadSubmissions() {
             const tbody = document.getElementById('allSubmissions');
             tbody.innerHTML = `<tr><td colspan="5">Loading...</td></tr>`;
@@ -236,8 +251,35 @@
             if (data.length === 0) return tbody.innerHTML = `<tr><td colspan="5">No submissions found.</td></tr>`;
             tbody.innerHTML = data.map(sub => `<tr><td>${sub.candidate_name}</td><td>${sub.candidate_email}</td><td>${sub.assessment_id || 'N/A'}</td><td>${new Date(sub.submitted_at).toLocaleString()}</td><td><button class="btn btn-sm btn-secondary" onclick="viewSubmission(${sub.id})"><i class="fas fa-eye"></i> View</button></td></tr>`).join('');
         }
-        async function loadInvitations() { /* Full logic to load invitations */ }
-        async function loadTemplates() { /* Full logic to load templates */ }
+
+        async function loadInvitations() {
+            const tbody = document.getElementById('invitationsList');
+            tbody.innerHTML = `<tr><td colspan="4">Loading...</td></tr>`;
+            if (!supabaseClient) return tbody.innerHTML = `<tr><td colspan="4">Database not connected.</td></tr>`;
+            const { data, error } = await supabaseClient.from('invitations').select('*').order('sent_at', { ascending: false });
+            if (error || !data) return tbody.innerHTML = `<tr><td colspan="4">Error loading invitations.</td></tr>`;
+            tbody.innerHTML = data.map(inv => `<tr><td>${inv.candidate_email}</td><td>${inv.assessment_id}</td><td><span class="badge badge-${inv.status === 'sent' ? 'warning' : 'success'}">${inv.status}</span></td><td><button class="btn btn-sm btn-secondary" onclick="copyInvitationLink('${inv.invitation_token}', '${inv.assessment_id}')"><i class="fas fa-copy"></i> Copy</button></td></tr>`).join('');
+        }
+
+        async function loadTemplates() {
+            const container = document.getElementById('templatesList');
+            const select = document.getElementById('assessmentTemplate');
+            container.innerHTML = `<p>Loading...</p>`;
+            select.innerHTML = `<option value="">Loading...</option>`;
+            if (!supabaseClient) {
+                container.innerHTML = `<p>Database not connected.</p>`;
+                select.innerHTML = `<option value="">DB not connected</option>`;
+                return;
+            }
+            const { data, error } = await supabaseClient.from('assessment_templates').select('*');
+            if (error || !data) {
+                container.innerHTML = `<p>Error loading templates.</p>`;
+                select.innerHTML = `<option value="">Error</option>`;
+                return;
+            }
+            container.innerHTML = data.map(t => `<div class="card"><div class="card-body"><h4>${t.title}</h4><p>${t.description}</p></div></div>`).join('');
+            select.innerHTML = data.map(t => `<option value="${t.id}">${t.title}</option>`).join('');
+        }
 
         async function viewSubmission(id) {
             if (!supabaseClient) return showToast('Error', 'Database not connected.', 'error');
@@ -256,10 +298,8 @@
             const cheatingLogs = submission.cheating_logs || [];
             const answers = submission.answers || [];
             const questions = submission.questions || [];
-
             const answersHtml = answers.length > 0 ? answers.map((answer, index) => `<div style="margin-bottom: 16px;"><h5 style="font-size: 13px; font-weight: 600;">Q${index + 1}: ${escapeHTML(questions[index]?.title)}</h5><div style="background: #f8f9fa; border: 1px solid var(--border); padding: 16px; font-family: monospace; white-space: pre-wrap; max-height: 200px; overflow-y: auto;">${escapeHTML(answer)}</div></div>`).join('') : '<p>No answers submitted.</p>';
             const securityHtml = cheatingLogs.length > 0 ? cheatingLogs.map(log => `<div style="background: #fef2f2; border-left: 4px solid var(--error); padding: 12px; margin-bottom: 8px;"><span>${escapeHTML(log.event)} at ${new Date(log.timestamp).toLocaleTimeString()}</span></div>`).join('') : '<p>No security incidents detected.</p>';
-
             const modal = document.createElement('div');
             modal.style.cssText = `position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;`;
             modal.innerHTML = `<div style="background: white; border-radius: var(--radius); max-width: 800px; width: 90%; max-height: 90vh; display: flex; flex-direction: column;"><div style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items:center;"><h3>Submission Details</h3><button onclick="this.closest('div[style*=\\"position: fixed\\"]').remove()" style="background:none;border:none;cursor:pointer;font-size:1.2rem;">&times;</button></div><div style="padding: 20px; flex: 1; overflow-y: auto;"><div style="margin-bottom: 20px;"><h4>Candidate Information</h4><p><strong>Name:</strong> ${escapeHTML(submission.candidate_name)}</p><p><strong>Email:</strong> ${escapeHTML(submission.candidate_email)}</p></div><div style="margin-bottom: 20px;"><h4>Submitted Answers</h4>${answersHtml}</div><div><h4>Security Events (${cheatingLogs.length})</h4>${securityHtml}</div></div><div style="padding: 20px; border-top: 1px solid var(--border); text-align: right;"><button onclick="this.closest('div[style*=\\"position: fixed\\"]').remove()" class="btn btn-secondary">Close</button></div></div>`;
@@ -288,7 +328,35 @@
              }
         }
         
-        async function createInvitation() { /* Full logic to create invitation */ }
+        async function createInvitation() {
+            if (!supabaseClient) return showToast('Error', 'Database not connected.', 'error');
+            const candidateEmail = document.getElementById('candidateEmail').value;
+            const assessmentId = document.getElementById('assessmentTemplate').value;
+            const expiresAt = document.getElementById('expirationDate').value;
+
+            if (!candidateEmail || !assessmentId || !expiresAt) return showToast('Error', 'Please fill all fields.', 'error');
+
+            const invitation_token = crypto.randomUUID();
+            const { data, error } = await supabaseClient.from('invitations').insert({
+                candidate_email: candidateEmail,
+                assessment_id: assessmentId,
+                expires_at: expiresAt,
+                invitation_token: invitation_token,
+                status: 'sent'
+            }).select().single();
+
+            if (error) return showToast('Error', 'Failed to create invitation.', 'error');
+            
+            showToast('Success', `Invitation created for ${candidateEmail}.`, 'success');
+            loadInvitations();
+        }
+
+        function copyInvitationLink(token, assessmentId) {
+            const link = `${window.location.origin.replace('admin.html', '')}index.html?assessment=${assessmentId}&token=${token}`;
+            navigator.clipboard.writeText(link).then(() => {
+                showToast('Copied!', 'Invitation link copied to clipboard.', 'success');
+            });
+        }
 
     </script>
 </body>
