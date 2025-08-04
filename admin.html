@@ -3,10 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proctored Assessment Platform</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/github.min.css">
+    <title>Assessment Admin Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -38,113 +35,212 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            background: var(--bg-secondary);
             color: var(--text-primary);
             line-height: 1.6;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
+        .admin-layout {
+            display: flex;
             min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .sidebar-header {
+            padding: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 2rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: var(--bg-accent);
+            color: var(--primary-color);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-title {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .stat-icon.primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .stat-icon.success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .stat-icon.warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .stat-icon.error {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
         }
 
         .card {
             background: var(--bg-primary);
             border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
             overflow: hidden;
-            width: 100%;
-            max-width: 800px;
-            animation: slideUp 0.5s ease-out;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .card-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-            color: white;
-            padding: 2rem;
-            text-align: center;
-            position: relative;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-accent);
         }
 
-        .card-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.05"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-            opacity: 0.3;
-        }
-
-        .card-header h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            position: relative;
-            z-index: 1;
+        .card-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
         }
 
         .card-header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            position: relative;
-            z-index: 1;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
         }
 
         .card-body {
-            padding: 2.5rem;
+            padding: 1.5rem;
         }
 
-        .form-group {
-            margin-bottom: 1.5rem;
+        .table {
+            width: 100%;
+            border-collapse: collapse;
         }
 
-        .form-label {
-            display: block;
+        .table th,
+        .table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table th {
+            background: var(--bg-accent);
             font-weight: 600;
             color: var(--text-primary);
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
-        .form-input {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 2px solid var(--border-color);
-            border-radius: var(--radius-md);
-            font-size: 1rem;
-            transition: all 0.2s ease;
-            background: var(--bg-primary);
+        .table td {
+            color: var(--text-primary);
         }
 
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
-        }
-
-        .form-textarea {
-            min-height: 120px;
-            resize: vertical;
-            font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+        .table tbody tr:hover {
+            background: var(--bg-accent);
         }
 
         .btn {
@@ -152,15 +248,14 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
+            padding: 0.5rem 1rem;
             border: none;
             border-radius: var(--radius-md);
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
             text-decoration: none;
-            min-width: 120px;
         }
 
         .btn-primary {
@@ -170,8 +265,6 @@
 
         .btn-primary:hover {
             background: var(--primary-dark);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
         }
 
         .btn-secondary {
@@ -192,330 +285,80 @@
             background: #059669;
         }
 
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.8rem;
         }
 
-        .btn-group {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 2rem;
-        }
-
-        /* Instructions Screen */
-        .instructions-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin: 2rem 0;
-        }
-
-        .instruction-item {
-            background: var(--bg-secondary);
-            padding: 1.5rem;
-            border-radius: var(--radius-md);
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .instruction-item h3 {
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-            display: flex;
+        .badge {
+            display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
-        .warning-box {
-            background: linear-gradient(135deg, #fef3c7, #fde047);
-            border: 1px solid var(--warning-color);
-            border-radius: var(--radius-md);
-            padding: 1.5rem;
-            margin: 1.5rem 0;
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
         }
 
-        .warning-box h3 {
+        .badge-warning {
+            background: #fef3c7;
             color: #92400e;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
         }
 
-        /* Assessment Screen */
-        .assessment-container {
-            max-width: none;
-            padding: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
+        .badge-error {
+            background: #fee2e2;
+            color: #991b1b;
         }
 
-        .assessment-header {
-            background: var(--bg-primary);
-            border-bottom: 2px solid var(--border-color);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: var(--shadow-sm);
+        .badge-secondary {
+            background: var(--bg-accent);
+            color: var(--text-secondary);
         }
 
-        .assessment-info h2 {
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
             color: var(--text-primary);
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
         }
 
-        .assessment-info p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .assessment-controls {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .timer {
-            background: var(--success-color);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-md);
-            font-weight: 600;
-            font-family: 'Monaco', monospace;
-        }
-
-        .recording-indicator {
-            background: var(--error-color);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-md);
-            font-weight: 600;
-            animation: pulse 2s infinite;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        .assessment-content {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-        }
-
-        .questions-panel {
-            width: 350px;
-            background: var(--bg-secondary);
-            border-right: 2px solid var(--border-color);
-            padding: 1.5rem;
-            overflow-y: auto;
-        }
-
-        .question-nav {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .question-nav-item {
-            width: 40px;
-            height: 40px;
-            border: 2px solid var(--border-color);
-            border-radius: var(--radius-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-weight: 600;
-        }
-
-        .question-nav-item.active {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-
-        .question-nav-item.answered {
-            background: var(--success-color);
-            color: white;
-            border-color: var(--success-color);
-        }
-
-        .current-question {
-            background: var(--bg-primary);
-            border-radius: var(--radius-md);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .current-question h3 {
-            color: var(--primary-color);
-            margin-bottom: 1rem;
-        }
-
-        .editor-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: var(--bg-primary);
-        }
-
-        .editor-header {
-            padding: 1rem 1.5rem;
-            background: var(--bg-accent);
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .editor-tabs {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .editor-tab {
-            padding: 0.5rem 1rem;
-            background: var(--bg-secondary);
-            border: none;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-        }
-
-        .editor-tab.active {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .editor-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .CodeMirror {
-            height: calc(100vh - 200px) !important;
-            font-size: 14px;
-            font-family: 'Fira Code', 'Monaco', 'Consolas', 'Courier New', monospace;
-        }
-
-        .CodeMirror-focused .CodeMirror-cursor {
-            border-left: 2px solid var(--primary-color);
-        }
-
-        /* Status Indicators */
-        .status-bar {
-            padding: 0.5rem 1.5rem;
-            background: var(--bg-accent);
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-
-        .webcam-preview {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 200px;
-            height: 150px;
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            box-shadow: var(--shadow-lg);
-            z-index: 1000;
-        }
-
-        .webcam-preview video {
+        .form-input,
+        .form-select,
+        .form-textarea {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background: var(--bg-primary);
         }
 
-        /* Responsive Design */
-        @media (max-width: 1024px) {
-            .instructions-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .questions-panel {
-                width: 300px;
-            }
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
         }
 
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-            
-            .card-body {
-                padding: 1.5rem;
-            }
-            
-            .assessment-content {
-                flex-direction: column;
-            }
-            
-            .questions-panel {
-                width: 100%;
-                max-height: 300px;
-            }
-            
-            .webcam-preview {
-                width: 150px;
-                height: 100px;
-            }
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
         }
 
-        /* Success Screen */
-        .success-screen {
-            text-align: center;
-            padding: 3rem 2rem;
-        }
-
-        .success-icon {
-            width: 80px;
-            height: 80px;
-            background: var(--success-color);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 2rem;
-            animation: bounceIn 0.6s ease-out;
-        }
-
-        @keyframes bounceIn {
-            0% {
-                opacity: 0;
-                transform: scale(0.3);
-            }
-            50% {
-                opacity: 1;
-                transform: scale(1.05);
-            }
-            70% {
-                transform: scale(0.9);
-            }
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .loading-overlay {
+        .modal {
             position: fixed;
             top: 0;
             left: 0;
@@ -528,792 +371,1004 @@
             z-index: 9999;
         }
 
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .modal-content {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .video-player {
+            width: 100%;
+            max-height: 400px;
+            border-radius: var(--radius-md);
+            background: #000;
+        }
+
+        .cheating-log {
+            background: var(--bg-accent);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-left: 4px solid var(--error-color);
+        }
+
+        .cheating-log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .cheating-log-event {
+            font-weight: 600;
+            color: var(--error-color);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        .cheating-log-time {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-family: 'Monaco', monospace;
+        }
+
+        .code-viewer {
+            background: #f8f9fa;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .progress-bar {
+            background: var(--bg-accent);
+            border-radius: 9999px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .admin-layout {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="app">
-        <!-- Dynamic content will be inserted here -->
-    </div>
+    <div class="admin-layout">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1><i class="fas fa-shield-alt"></i> Admin Panel</h1>
+                <p>Assessment Management</p>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" onclick="showSection('dashboard')">
+                    <i class="fas fa-chart-bar"></i> Dashboard
+                </button>
+                <button class="nav-item" onclick="showSection('submissions')">
+                    <i class="fas fa-file-alt"></i> Submissions
+                </button>
+                <button class="nav-item" onclick="showSection('questions')">
+                    <i class="fas fa-question-circle"></i> Questions
+                </button>
+                <button class="nav-item" onclick="showSection('invitations')">
+                    <i class="fas fa-envelope"></i> Invitations
+                </button>
+                <button class="nav-item" onclick="showSection('settings')">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+            </nav>
+        </div>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
-        <div class="loading-spinner"></div>
-    </div>
+        <div class="main-content">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="section">
+                <div class="page-header">
+                    <h2>Dashboard</h2>
+                    <p>Overview of assessment activity and statistics</p>
+                </div>
 
-    <!-- Webcam Preview -->
-    <div id="webcamPreview" class="webcam-preview" style="display: none;">
-        <video id="webcamVideo" autoplay muted playsinline></video>
-    </div>
-
-    <!-- External Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
-
-    <script>
-        // Configuration
-        const CONFIG = {
-            supabaseUrl: "https://ytoidmelmialrjfqyhet.supabase.co",
-            supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0b2lkbWVsbWlhbHJqZnF5aGV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODcwNjI1NDIsImV4cCI6MjAwMjYzODU0Mn0.DEMO_KEY_REPLACE_WITH_REAL"
-        };
-
-        // Global State
-        const state = {
-            currentScreen: 'welcome',
-            currentUser: null,
-            currentQuestion: 0,
-            questions: [],
-            answers: [],
-            cheatingLogs: [],
-            mediaRecorder: null,
-            videoChunks: [],
-            editors: {},
-            timer: null,
-            timeLeft: 0,
-            supabaseClient: null
-        };
-
-        // Initialize Supabase
-        if (typeof supabase !== 'undefined') {
-            state.supabaseClient = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
-        }
-
-        // Sample Questions Data
-        const sampleQuestions = [
-            {
-                id: 1,
-                title: "Array Manipulation",
-                description: "Write a function that takes an array of integers and returns the sum of all even numbers.",
-                language: "javascript",
-                starter: "function sumEvenNumbers(arr) {\n    // Your code here\n    \n}",
-                testCases: [
-                    { input: "[1, 2, 3, 4, 5, 6]", expected: "12" },
-                    { input: "[2, 4, 6, 8]", expected: "20" },
-                    { input: "[1, 3, 5]", expected: "0" }
-                ]
-            },
-            {
-                id: 2,
-                title: "String Processing",
-                description: "Create a function that reverses words in a sentence while keeping the word order intact.",
-                language: "javascript",
-                starter: "function reverseWords(sentence) {\n    // Your code here\n    \n}",
-                testCases: [
-                    { input: "'hello world'", expected: "'olleh dlrow'" },
-                    { input: "'javascript is awesome'", expected: "'tpircsavaj si emosewa'" }
-                ]
-            },
-            {
-                id: 3,
-                title: "Algorithm Challenge",
-                description: "Implement a function to find the longest palindromic substring in a given string.",
-                language: "javascript",
-                starter: "function longestPalindrome(s) {\n    // Your code here\n    \n}",
-                testCases: [
-                    { input: "'babad'", expected: "'bab' or 'aba'" },
-                    { input: "'cbbd'", expected: "'bb'" }
-                ]
-            }
-        ];
-
-        // Screen Management
-        function showScreen(screenName) {
-            state.currentScreen = screenName;
-            const app = document.getElementById('app');
-            
-            switch (screenName) {
-                case 'welcome':
-                    app.innerHTML = renderWelcomeScreen();
-                    break;
-                case 'instructions':
-                    app.innerHTML = renderInstructionsScreen();
-                    break;
-                case 'assessment':
-                    app.innerHTML = renderAssessmentScreen();
-                    initializeAssessment();
-                    break;
-                case 'success':
-                    app.innerHTML = renderSuccessScreen();
-                    break;
-            }
-        }
-
-        // Screen Renderers
-        function renderWelcomeScreen() {
-            return `
-                <div class="container">
-                    <div class="card">
-                        <div class="card-header">
-                            <h1><i class="fas fa-code"></i> Proctored Assessment</h1>
-                            <p>Secure coding evaluation platform</p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Total Submissions</span>
+                            <div class="stat-icon primary">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
                         </div>
-                        <div class="card-body">
+                        <div class="stat-value" id="totalSubmissions">0</div>
+                        <div class="stat-description">All time submissions</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Active Assessments</span>
+                            <div class="stat-icon success">
+                                <i class="fas fa-play-circle"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value" id="activeAssessments">0</div>
+                        <div class="stat-description">Currently in progress</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Cheating Incidents</span>
+                            <div class="stat-icon error">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value" id="cheatingIncidents">0</div>
+                        <div class="stat-description">Flagged submissions</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Average Score</span>
+                            <div class="stat-icon warning">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value" id="averageScore">0%</div>
+                        <div class="stat-description">Across all submissions</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Recent Submissions</h3>
+                        <p>Latest assessment submissions from candidates</p>
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Candidate</th>
+                                    <th>Assessment</th>
+                                    <th>Submitted</th>
+                                    <th>Score</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentSubmissions">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; color: var(--text-secondary);">
+                                        No submissions yet
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submissions Section -->
+            <div id="submissions-section" class="section hidden">
+                <div class="page-header">
+                    <h2>Submissions</h2>
+                    <p>Manage and review assessment submissions</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>All Submissions</h3>
+                        <button class="btn btn-primary" onclick="refreshSubmissions()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Candidate</th>
+                                    <th>Email</th>
+                                    <th>Assessment</th>
+                                    <th>Submitted</th>
+                                    <th>Duration</th>
+                                    <th>Cheating Logs</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allSubmissions">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; color: var(--text-secondary);">
+                                        Loading submissions...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Questions Section -->
+            <div id="questions-section" class="section hidden">
+                <div class="page-header">
+                    <h2>Questions Management</h2>
+                    <p>Create and manage assessment questions</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Question Bank</h3>
+                        <button class="btn btn-primary" onclick="showCreateQuestionModal()">
+                            <i class="fas fa-plus"></i> Add Question
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="questionsList">
+                            <!-- Questions will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invitations Section -->
+            <div id="invitations-section" class="section hidden">
+                <div class="page-header">
+                    <h2>Assessment Invitations</h2>
+                    <p>Send assessment invitations to candidates</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Send Invitation</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="invitationForm">
                             <div class="form-group">
-                                <label class="form-label">Full Name *</label>
-                                <input type="text" id="candidateName" class="form-input" placeholder="Enter your full name" required>
+                                <label class="form-label">Candidate Email</label>
+                                <input type="email" id="candidateEmail" class="form-input" placeholder="candidate@example.com" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Email Address *</label>
-                                <input type="email" id="candidateEmail" class="form-input" placeholder="Enter your email address" required>
+                                <label class="form-label">Assessment Type</label>
+                                <select id="assessmentType" class="form-select" required>
+                                    <option value="">Select Assessment</option>
+                                    <option value="javascript_fundamentals">JavaScript Fundamentals</option>
+                                    <option value="python_basics">Python Basics</option>
+                                </select>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Assessment Duration (minutes)</label>
-                                <select id="duration" class="form-input">
+                                <label class="form-label">Duration (minutes)</label>
+                                <select id="assessmentDuration" class="form-select">
                                     <option value="30">30 minutes</option>
                                     <option value="60" selected>60 minutes</option>
                                     <option value="90">90 minutes</option>
                                     <option value="120">120 minutes</option>
                                 </select>
                             </div>
-                            <div class="btn-group">
-                                <button class="btn btn-primary" onclick="proceedToInstructions()">
-                                    <i class="fas fa-arrow-right"></i> Continue
-                                </button>
+                            <div class="form-group">
+                                <label class="form-label">Personal Message (Optional)</label>
+                                <textarea id="personalMessage" class="form-textarea" placeholder="Add a personal message for the candidate..."></textarea>
                             </div>
-                        </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Send Invitation
+                            </button>
+                        </form>
                     </div>
                 </div>
-            `;
-        }
+            </div>
 
-        function renderInstructionsScreen() {
-            return `
-                <div class="container">
-                    <div class="card">
-                        <div class="card-header">
-                            <h1><i class="fas fa-info-circle"></i> Assessment Instructions</h1>
-                            <p>Please read carefully before starting</p>
-                        </div>
-                        <div class="card-body">
-                            <div class="warning-box">
-                                <h3><i class="fas fa-exclamation-triangle"></i> Important Notice</h3>
-                                <p>This assessment is proctored. Your webcam will record throughout the session, and tab switching or window changes will be logged.</p>
+            <!-- Settings Section -->
+            <div id="settings-section" class="section hidden">
+                <div class="page-header">
+                    <h2>Settings</h2>
+                    <p>Configure platform settings and preferences</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>General Settings</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="settingsForm">
+                            <div class="form-group">
+                                <label class="form-label">Platform Name</label>
+                                <input type="text" id="platformName" class="form-input" value="Proctored Assessment Platform">
                             </div>
-                            
-                            <div class="instructions-grid">
-                                <div class="instruction-item">
-                                    <h3><i class="fas fa-clock"></i> Time Limit</h3>
-                                    <p>You have <strong>${document.getElementById('duration')?.value || 60} minutes</strong> to complete all questions. The assessment will auto-submit when time expires.</p>
-                                </div>
-                                
-                                <div class="instruction-item ">
-                                    <h3><i class="fas fa-video"></i> Recording</h3>
-                                    <p>Your webcam will be active throughout the assessment. Ensure good lighting and stay visible in the frame.</p>
-                                </div>
-                                
-                                <div class="instruction-item">
-                                    <h3><i class="fas fa-shield-alt"></i> Fair Play</h3>
-                                    <p>Do not switch tabs, open other applications, or leave the assessment window. All such activities are monitored.</p>
-                                </div>
-                                
-                                <div class="instruction-item">
-                                    <h3><i class="fas fa-code"></i> Coding</h3>
-                                    <p>Write clean, well-commented code. Test your solutions with the provided examples before submitting.</p>
-                                </div>
+                            <div class="form-group">
+                                <label class="form-label">Default Assessment Duration</label>
+                                <select id="defaultDuration" class="form-select">
+                                    <option value="30">30 minutes</option>
+                                    <option value="60" selected>60 minutes</option>
+                                    <option value="90">90 minutes</option>
+                                    <option value="120">120 minutes</option>
+                                </select>
                             </div>
-                            
-                            <div class="current-question">
-                                <h3>Assessment Overview</h3>
-                                <p><strong>Total Questions:</strong> ${sampleQuestions.length}</p>
-                                <p><strong>Programming Language:</strong> JavaScript</p>
-                                <p><strong>Format:</strong> Algorithmic problem solving</p>
+                            <div class="form-group">
+                                <label class="form-label">Supabase Configuration</label>
+                                <input type="text" id="supabaseUrl" class="form-input" placeholder="Supabase URL">
+                                <input type="password" id="supabaseKey" class="form-input" placeholder="Supabase Anon Key" style="margin-top: 0.5rem;">
                             </div>
-                            
-                            <div class="btn-group">
-                                <button class="btn btn-secondary" onclick="showScreen('welcome')">
-                                    <i class="fas fa-arrow-left"></i> Back
-                                </button>
-                                <button class="btn btn-success" onclick="startAssessment()">
-                                    <i class="fas fa-play"></i> Start Assessment
-                                </button>
-                            </div>
-                        </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Settings
+                            </button>
+                        </form>
                     </div>
                 </div>
-            `;
-        }
+            </div>
+        </div>
+    </div>
 
-        function renderAssessmentScreen() {
-            return `
-                <div class="assessment-container">
-                    <div class="assessment-header">
-                        <div class="assessment-info">
-                            <h2>${state.currentUser.name}</h2>
-                            <p>Question ${state.currentQuestion + 1} of ${state.questions.length}</p>
-                        </div>
-                        <div class="assessment-controls">
-                            <div id="timer" class="timer">
-                                <i class="fas fa-clock"></i> <span id="timeDisplay">00:00</span>
-                            </div>
-                            <div class="recording-indicator">
-                                <i class="fas fa-circle"></i> Recording
-                            </div>
-                        </div>
+    <!-- Submission Detail Modal -->
+    <div id="submissionModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Submission Details</h3>
+                <button class="modal-close" onclick="closeSubmissionModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="submissionModalBody">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSubmissionModal()">Close</button>
+                <button class="btn btn-primary" onclick="downloadSubmissionReport()">
+                    <i class="fas fa-download"></i> Download Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Question Modal -->
+    <div id="createQuestionModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Question</h3>
+                <button class="modal-close" onclick="closeCreateQuestionModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createQuestionForm">
+                    <div class="form-group">
+                        <label class="form-label">Question Title</label>
+                        <input type="text" id="questionTitle" class="form-input" required>
                     </div>
-                    
-                    <div class="assessment-content">
-                        <div class="questions-panel">
-                            <div class="question-nav">
-                                ${state.questions.map((_, index) => `
-                                    <div class="question-nav-item ${index === state.currentQuestion ? 'active' : ''} ${state.answers[index] ? 'answered' : ''}" 
-                                         onclick="switchQuestion(${index})">
-                                        ${index + 1}
-                                    </div>
-                                `).join('')}
-                            </div>
-                            
-                            <div class="current-question">
-                                <h3>${state.questions[state.currentQuestion].title}</h3>
-                                <p>${state.questions[state.currentQuestion].description}</p>
-                                
-                                ${state.questions[state.currentQuestion].testCases ? `
-                                    <div style="margin-top: 1rem;">
-                                        <strong>Test Cases:</strong>
-                                        ${state.questions[state.currentQuestion].testCases.map((test, i) => `
-                                            <div style="margin: 0.5rem 0; padding: 0.5rem; background: var(--bg-accent); border-radius: var(--radius-sm); font-family: monospace; font-size: 0.9rem;">
-                                                <div><strong>Input:</strong> ${test.input}</div>
-                                                <div><strong>Expected:</strong> ${test.expected}</div>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                        
-                        <div class="editor-panel">
-                            <div class="editor-header">
-                                <div class="editor-tabs">
-                                    <button class="editor-tab active">Solution</button>
-                                </div>
-                                <div class="editor-actions">
-                                    <button class="btn btn-secondary" onclick="resetCode()" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
-                                        <i class="fas fa-undo"></i> Reset
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div id="codeEditor"></div>
-                            
-                            <div class="status-bar">
-                                <div>
-                                    <span>Language: JavaScript</span>
-                                    <span style="margin-left: 1rem;">Auto-saved</span>
-                                </div>
-                                <div>
-                                    <button class="btn btn-primary" onclick="submitAssessment()" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
-                                        <i class="fas fa-paper-plane"></i> Submit Assessment
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea id="questionDescription" class="form-textarea" required></textarea>
                     </div>
-                </div>
-            `;
-        }
-
-        function renderSuccessScreen() {
-            return `
-                <div class="container">
-                    <div class="card">
-                        <div class="card-body success-screen">
-                            <div class="success-icon">
-                                <i class="fas fa-check" style="font-size: 2rem;"></i>
-                            </div>
-                            <h1 style="color: var(--success-color); margin-bottom: 1rem;">Assessment Submitted Successfully!</h1>
-                            <p style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 2rem;">
-                                Thank you for completing the assessment. Your responses have been recorded and will be reviewed by our team.
-                            </p>
-                            <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
-                                <h3 style="margin-bottom: 1rem;">Submission Details</h3>
-                                <p><strong>Candidate:</strong> ${state.currentUser?.name}</p>
-                                <p><strong>Questions Completed:</strong> ${state.answers.filter(a => a && a.trim()).length} of ${state.questions.length}</p>
-                                <p><strong>Submitted At:</strong> ${new Date().toLocaleString()}</p>
-                            </div>
-                            <p style="color: var(--text-secondary); font-size: 0.9rem;">
-                                You may now close this window. Results will be communicated separately.
-                            </p>
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Difficulty</label>
+                        <select id="questionDifficulty" class="form-select" required>
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
                     </div>
-                </div>
-            `;
-        }
+                    <div class="form-group">
+                        <label class="form-label">Programming Language</label>
+                        <select id="questionLanguage" class="form-select" required>
+                            <option value="javascript">JavaScript</option>
+                            <option value="python">Python</option>
+                            <option value="java">Java</option>
+                            <option value="cpp">C++</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Starter Code</label>
+                        <textarea id="questionStarter" class="form-textarea" style="font-family: monospace;"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCreateQuestionModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="createQuestion()">
+                    <i class="fas fa-plus"></i> Create Question
+                </button>
+            </div>
+        </div>
+    </div>
 
-        // Event Handlers
-        function proceedToInstructions() {
-            const name = document.getElementById('candidateName').value.trim();
-            const email = document.getElementById('candidateEmail').value.trim();
-            
-            if (!name || !email) {
-                alert('Please fill in all required fields.');
-                return;
-            }
-            
-            state.currentUser = { name, email };
-            showScreen('instructions');
-        }
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Admin Dashboard JavaScript
+        let currentSection = 'dashboard';
+        let supabaseClient = null;
 
-        async function startAssessment() {
-            try {
-                showLoading(true);
-                
-                // Initialize questions and answers
-                state.questions = sampleQuestions;
-                state.answers = new Array(state.questions.length).fill('');
-                state.currentQuestion = 0;
-                
-                // Setup webcam
-                await setupWebcam();
-                
-                // Setup cheating detection
-                setupCheatingDetection();
-                
-                // Start timer
-                const duration = parseInt(document.getElementById('duration').value) || 60;
-                startTimer(duration * 60);
-                
-                showScreen('assessment');
-                
-            } catch (error) {
-                console.error('Failed to start assessment:', error);
-                alert('Failed to start assessment. Please check your webcam permissions and try again.');
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        function initializeAssessment() {
-            // Initialize CodeMirror editor
-            const editorElement = document.getElementById('codeEditor');
-            if (editorElement) {
-                const editor = CodeMirror(editorElement, {
-                    value: state.questions[state.currentQuestion].starter || '',
-                    mode: 'javascript',
-                    theme: 'github',
-                    lineNumbers: true,
-                    lineWrapping: true,
-                    autoCloseBrackets: true,
-                    matchBrackets: true,
-                    indentUnit: 4,
-                    tabSize: 4,
-                    extraKeys: {
-                        "Ctrl-Space": "autocomplete",
-                        "Tab": function(cm) {
-                            cm.replaceSelection("    ");
-                        }
-                    }
-                });
-                
-                state.editors[state.currentQuestion] = editor;
-                
-                // Auto-save on change
-                editor.on('change', () => {
-                    state.answers[state.currentQuestion] = editor.getValue();
-                    updateQuestionNavigation();
-                });
-                
-                // Load existing answer if any
-                if (state.answers[state.currentQuestion]) {
-                    editor.setValue(state.answers[state.currentQuestion]);
-                }
-            }
-        }
-
-        function switchQuestion(questionIndex) {
-            if (questionIndex === state.currentQuestion) return;
-            
-            // Save current answer
-            if (state.editors[state.currentQuestion]) {
-                state.answers[state.currentQuestion] = state.editors[state.currentQuestion].getValue();
-            }
-            
-            state.currentQuestion = questionIndex;
-            
-            // Re-render assessment screen
-            showScreen('assessment');
-        }
-
-        function resetCode() {
-            if (confirm('Are you sure you want to reset your code for this question?')) {
-                const editor = state.editors[state.currentQuestion];
-                if (editor) {
-                    editor.setValue(state.questions[state.currentQuestion].starter || '');
-                    state.answers[state.currentQuestion] = '';
-                    updateQuestionNavigation();
-                }
-            }
-        }
-
-        function updateQuestionNavigation() {
-            const navItems = document.querySelectorAll('.question-nav-item');
-            navItems.forEach((item, index) => {
-                item.classList.remove('active', 'answered');
-                if (index === state.currentQuestion) {
-                    item.classList.add('active');
-                }
-                if (state.answers[index] && state.answers[index].trim()) {
-                    item.classList.add('answered');
-                }
-            });
-        }
-
-        async function submitAssessment() {
-            if (!confirm('Are you sure you want to submit your assessment? This action cannot be undone.')) {
-                return;
-            }
-            
-            try {
-                showLoading(true);
-                
-                // Save current answer
-                if (state.editors[state.currentQuestion]) {
-                    state.answers[state.currentQuestion] = state.editors[state.currentQuestion].getValue();
-                }
-                
-                // Stop recording
-                if (state.mediaRecorder && state.mediaRecorder.state === 'recording') {
-                    state.mediaRecorder.stop();
-                }
-                
-                // Stop timer
-                if (state.timer) {
-                    clearInterval(state.timer);
-                }
-                
-                // Prepare submission data
-                const submissionData = {
-                    candidate_name: state.currentUser.name,
-                    candidate_email: state.currentUser.email,
-                    questions: state.questions,
-                    answers: state.answers,
-                    cheating_logs: state.cheatingLogs,
-                    submitted_at: new Date().toISOString(),
-                    time_taken: calculateTimeTaken()
-                };
-                
-                // Submit to Supabase (if configured)
-                if (state.supabaseClient) {
-                    const { data, error } = await state.supabaseClient
-                        .from('submissions')
-                        .insert(submissionData);
-                    
-                    if (error) {
-                        console.error('Submission error:', error);
-                    }
-                }
-                
-                // Show success screen
-                showScreen('success');
-                
-            } catch (error) {
-                console.error('Failed to submit assessment:', error);
-                alert('Failed to submit assessment. Please try again.');
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        // Utility Functions
-        function showLoading(show) {
-            const overlay = document.getElementById('loadingOverlay');
-            overlay.style.display = show ? 'flex' : 'none';
-        }
-
-        function startTimer(seconds) {
-            state.timeLeft = seconds;
-            updateTimerDisplay();
-            
-            state.timer = setInterval(() => {
-                state.timeLeft--;
-                updateTimerDisplay();
-                
-                if (state.timeLeft <= 0) {
-                    clearInterval(state.timer);
-                    alert('Time is up! Submitting your assessment automatically.');
-                    submitAssessment();
-                }
-            }, 1000);
-        }
-
-        function updateTimerDisplay() {
-            const hours = Math.floor(state.timeLeft / 3600);
-            const minutes = Math.floor((state.timeLeft % 3600) / 60);
-            const seconds = state.timeLeft % 60;
-            
-            const display = hours > 0 
-                ? `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-                : `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            const timerElement = document.getElementById('timeDisplay');
-            if (timerElement) {
-                timerElement.textContent = display;
-                
-                // Change color when time is running low
-                const timerContainer = document.getElementById('timer');
-                if (state.timeLeft < 300) { // Less than 5 minutes
-                    timerContainer.style.background = 'var(--error-color)';
-                } else if (state.timeLeft < 600) { // Less than 10 minutes
-                    timerContainer.style.background = 'var(--warning-color)';
-                }
-            }
-        }
-
-        function calculateTimeTaken() {
-            const duration = parseInt(document.getElementById('duration')?.value || 60) * 60;
-            return duration - state.timeLeft;
-        }
-
-        async function setupWebcam() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: 640, height: 480 }, 
-                    audio: true 
-                });
-                
-                const video = document.getElementById('webcamVideo');
-                if (video) {
-                    video.srcObject = stream;
-                    document.getElementById('webcamPreview').style.display = 'block';
-                }
-                
-                // Setup MediaRecorder
-                state.videoChunks = [];
-                state.mediaRecorder = new MediaRecorder(stream, {
-                    mimeType: 'video/webm;codecs=vp8,opus'
-                });
-                
-                state.mediaRecorder.ondataavailable = (event) => {
-                    if (event.data.size > 0) {
-                        state.videoChunks.push(event.data);
-                    }
-                };
-                
-                state.mediaRecorder.onstop = async () => {
-                    const blob = new Blob(state.videoChunks, { type: 'video/webm' });
-                    
-                    // Upload to Supabase Storage (if configured)
-                    if (state.supabaseClient) {
-                        const fileName = `recording-${Date.now()}-${state.currentUser.name.replace(/\s+/g, '-')}.webm`;
-                        
-                        try {
-                            const { data, error } = await state.supabaseClient.storage
-                                .from('recordings')
-                                .upload(fileName, blob);
-                            
-                            if (!error) {
-                                console.log('Video uploaded successfully:', fileName);
-                            }
-                        } catch (err) {
-                            console.error('Video upload failed:', err);
-                        }
-                    }
-                };
-                
-                state.mediaRecorder.start(1000); // Record in 1-second chunks
-                
-            } catch (error) {
-                console.error('Webcam setup failed:', error);
-                throw error;
-            }
-        }
-
-        function setupCheatingDetection() {
-            const logCheatingEvent = (event, details = {}) => {
-                const log = {
-                    event,
-                    timestamp: new Date().toISOString(),
-                    details
-                };
-                state.cheatingLogs.push(log);
-                console.warn('Cheating detected:', log);
-                
-                // Show warning to user
-                if (state.currentScreen === 'assessment') {
-                    showCheatingWarning(event);
-                }
-            };
-            
-            // Tab switching / window blur
-            window.addEventListener('blur', () => {
-                logCheatingEvent('window_blur');
-            });
-            
-            window.addEventListener('focus', () => {
-                logCheatingEvent('window_focus');
-            });
-            
-            // Visibility change (tab switching)
-            document.addEventListener('visibilitychange', () => {
-                if (document.hidden) {
-                    logCheatingEvent('tab_hidden');
-                } else {
-                    logCheatingEvent('tab_visible');
-                }
-            });
-            
-            // Context menu (right-click)
-            document.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                logCheatingEvent('context_menu_attempt');
-            });
-            
-            // Key combinations
-            document.addEventListener('keydown', (e) => {
-                const suspiciousKeys = [
-                    'F12', // Developer tools
-                    'F5',  // Refresh
-                    'PrintScreen'
-                ];
-                
-                const suspiciousCombos = [
-                    { ctrl: true, shift: true, key: 'I' }, // Dev tools
-                    { ctrl: true, shift: true, key: 'J' }, // Console
-                    { ctrl: true, shift: true, key: 'C' }, // Inspector
-                    { ctrl: true, key: 'U' }, // View source
-                    { ctrl: true, key: 'R' }, // Refresh
-                    { alt: true, key: 'Tab' }, // Alt+Tab
-                    { ctrl: true, key: 'Tab' }, // Ctrl+Tab
-                ];
-                
-                if (suspiciousKeys.includes(e.key)) {
-                    e.preventDefault();
-                    logCheatingEvent('suspicious_key', { key: e.key });
-                }
-                
-                for (const combo of suspiciousCombos) {
-                    if (
-                        (combo.ctrl ? e.ctrlKey : true) &&
-                        (combo.shift ? e.shiftKey : true) &&
-                        (combo.alt ? e.altKey : true) &&
-                        e.key === combo.key
-                    ) {
-                        e.preventDefault();
-                        logCheatingEvent('suspicious_key_combo', combo);
-                        break;
-                    }
-                }
-            });
-            
-            // Mouse leave (hovering outside window)
-            document.addEventListener('mouseleave', () => {
-                logCheatingEvent('mouse_leave');
-            });
-            
-            // Copy/paste attempts in editor
-            document.addEventListener('paste', (e) => {
-                if (e.target.closest('.CodeMirror')) {
-                    logCheatingEvent('paste_attempt', {
-                        content: e.clipboardData.getData('text').substring(0, 100)
-                    });
-                }
-            });
-        }
-
-        function showCheatingWarning(eventType) {
-            const warnings = {
-                'window_blur': 'Warning: You switched away from the assessment window!',
-                'tab_hidden': 'Warning: You switched to another tab!',
-                'context_menu_attempt': 'Warning: Right-click is disabled during assessment!',
-                'suspicious_key': 'Warning: That key combination is not allowed!',
-                'suspicious_key_combo': 'Warning: Developer tools access is prohibited!',
-                'mouse_leave': 'Warning: Keep your mouse within the assessment window!',
-                'paste_attempt': 'Warning: Pasting content has been logged!'
-            };
-            
-            const message = warnings[eventType] || 'Warning: Suspicious activity detected!';
-            
-            // Create warning notification
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 80px;
-                right: 20px;
-                background: var(--error-color);
-                color: white;
-                padding: 1rem 1.5rem;
-                border-radius: var(--radius-md);
-                box-shadow: var(--shadow-lg);
-                z-index: 10000;
-                font-weight: 600;
-                max-width: 300px;
-                animation: slideIn 0.3s ease-out;
-            `;
-            notification.innerHTML = `
-                <i class="fas fa-exclamation-triangle"></i> ${message}
-            `;
-            
-            document.body.appendChild(notification);
-            
-            // Remove after 5 seconds
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.style.animation = 'slideOut 0.3s ease-in';
-                    setTimeout(() => notification.remove(), 300);
-                }
-            }, 5000);
-        }
-
-        // Initialize app
+        // Initialize admin dashboard
         document.addEventListener('DOMContentLoaded', () => {
-            showScreen('welcome');
+            loadDashboardData();
+            setupEventListeners();
+        });
+
+        // Section Management
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+            });
+
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Show target section
+            document.getElementById(`${sectionName}-section`).classList.remove('hidden');
             
-            // Add CSS animations
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes slideIn {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
+            // Add active class to clicked nav item
+            event.target.classList.add('active');
+            
+            currentSection = sectionName;
+
+            // Load section-specific data
+            switch (sectionName) {
+                case 'submissions':
+                    loadSubmissions();
+                    break;
+                case 'questions':
+                    loadQuestions();
+                    break;
+            }
+        }
+
+        // Dashboard Data Loading
+        function loadDashboardData() {
+            // Simulate loading dashboard statistics
+            updateDashboardStats({
+                totalSubmissions: 156,
+                activeAssessments: 12,
+                cheatingIncidents: 8,
+                averageScore: 78
+            });
+
+            loadRecentSubmissions();
+        }
+
+        function updateDashboardStats(stats) {
+            document.getElementById('totalSubmissions').textContent = stats.totalSubmissions;
+            document.getElementById('activeAssessments').textContent = stats.activeAssessments;
+            document.getElementById('cheatingIncidents').textContent = stats.cheatingIncidents;
+            document.getElementById('averageScore').textContent = `${stats.averageScore}%`;
+        }
+
+        function loadRecentSubmissions() {
+            const mockSubmissions = [
+                {
+                    id: 1,
+                    candidateName: 'John Doe',
+                    assessment: 'JavaScript Fundamentals',
+                    submittedAt: '2024-08-04 14:30',
+                    score: 85,
+                    status: 'completed'
+                },
+                {
+                    id: 2,
+                    candidateName: 'Jane Smith',
+                    assessment: 'Python Basics',
+                    submittedAt: '2024-08-04 13:15',
+                    score: 92,
+                    status: 'completed'
+                },
+                {
+                    id: 3,
+                    candidateName: 'Mike Johnson',
+                    assessment: 'JavaScript Fundamentals',
+                    submittedAt: '2024-08-04 12:45',
+                    score: 67,
+                    status: 'flagged'
                 }
-                @keyframes slideOut {
-                    from { transform: translateX(0); opacity: 1; }
-                    to { transform: translateX(100%); opacity: 0; }
+            ];
+
+            const tbody = document.getElementById('recentSubmissions');
+            tbody.innerHTML = mockSubmissions.map(submission => `
+                <tr>
+                    <td>${submission.candidateName}</td>
+                    <td>${submission.assessment}</td>
+                    <td>${submission.submittedAt}</td>
+                    <td>${submission.score}%</td>
+                    <td>
+                        <span class="badge ${submission.status === 'completed' ? 'badge-success' : 'badge-warning'}">
+                            ${submission.status}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewSubmission(${submission.id})">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Submissions Management
+        function loadSubmissions() {
+            const mockData = [
+                {
+                    id: 1,
+                    candidateName: 'John Doe',
+                    candidateEmail: 'john@example.com',
+                    assessment: 'JavaScript Fundamentals',
+                    submittedAt: '2024-08-04 14:30',
+                    duration: '45:30',
+                    cheatingLogs: 3,
+                    hasVideo: true
+                },
+                {
+                    id: 2,
+                    candidateName: 'Jane Smith',
+                    candidateEmail: 'jane@example.com',
+                    assessment: 'Python Basics',
+                    submittedAt: '2024-08-04 13:15',
+                    duration: '38:22',
+                    cheatingLogs: 0,
+                    hasVideo: true
                 }
+            ];
+
+            const tbody = document.getElementById('allSubmissions');
+            tbody.innerHTML = mockData.map(submission => `
+                <tr>
+                    <td>${submission.candidateName}</td>
+                    <td>${submission.candidateEmail}</td>
+                    <td>${submission.assessment}</td>
+                    <td>${submission.submittedAt}</td>
+                    <td>${submission.duration}</td>
+                    <td>
+                        <span class="badge ${submission.cheatingLogs > 0 ? 'badge-warning' : 'badge-success'}">
+                            ${submission.cheatingLogs} incidents
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewSubmission(${submission.id})">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function refreshSubmissions() {
+            loadSubmissions();
+        }
+
+        function viewSubmission(submissionId) {
+            // Mock submission data
+            const submissionData = {
+                candidateName: 'John Doe',
+                candidateEmail: 'john@example.com',
+                assessment: 'JavaScript Fundamentals',
+                submittedAt: '2024-08-04 14:30',
+                duration: '45:30',
+                answers: [
+                    {
+                        question: 'Array Sum of Evens',
+                        answer: 'function sumEvenNumbers(arr) {\n    return arr.filter(n => n % 2 === 0).reduce((sum, n) => sum + n, 0);\n}'
+                    }
+                ],
+                cheatingLogs: [
+                    {
+                        event: 'tab_hidden',
+                        timestamp: '2024-08-04 14:15:32',
+                        details: 'User switched to another tab'
+                    },
+                    {
+                        event: 'window_blur',
+                        timestamp: '2024-08-04 14:22:18',
+                        details: 'Window lost focus'
+                    }
+                ],
+                hasVideo: true
+            };
+
+            showSubmissionModal(submissionData);
+        }
+
+        function showSubmissionModal(data) {
+            const modalBody = document.getElementById('submissionModalBody');
+            modalBody.innerHTML = `
+                <div style="margin-bottom: 2rem;">
+                    <h4 style="margin-bottom: 1rem;">Candidate Information</h4>
+                    <p><strong>Name:</strong> ${data.candidateName}</p>
+                    <p><strong>Email:</strong> ${data.candidateEmail}</p>
+                    <p><strong>Assessment:</strong> ${data.assessment}</p>
+                    <p><strong>Submitted:</strong> ${data.submittedAt}</p>
+                    <p><strong>Duration:</strong> ${data.duration}</p>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <h4 style="margin-bottom: 1rem;">Answers</h4>
+                    ${data.answers.map((answer, index) => `
+                        <div style="margin-bottom: 1.5rem;">
+                            <h5 style="color: var(--primary-color); margin-bottom: 0.5rem;">
+                                Question ${index + 1}: ${answer.question}
+                            </h5>
+                            <div class="code-viewer">${answer.answer}</div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <h4 style="margin-bottom: 1rem;">Cheating Logs (${data.cheatingLogs.length} incidents)</h4>
+                    ${data.cheatingLogs.length > 0 ? data.cheatingLogs.map(log => `
+                        <div class="cheating-log">
+                            <div class="cheating-log-header">
+                                <span class="cheating-log-event">${log.event.replace('_', ' ')}</span>
+                                <span class="cheating-log-time">${log.timestamp}</span>
+                            </div>
+                            <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">
+                                ${log.details}
+                            </p>
+                        </div>
+                    `).join('') : '<p style="color: var(--text-secondary);">No cheating incidents detected.</p>'}
+                </div>
+
+                ${data.hasVideo ? `
+                    <div style="margin-bottom: 2rem;">
+                        <h4 style="margin-bottom: 1rem;">Video Recording</h4>
+                        <video class="video-player" controls>
+                            <source src="#" type="video/webm">
+                            Your browser does not support the video tag.
+                        </video>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">
+                            Video recording of the assessment session
+                        </p>
+                    </div>
+                ` : ''}
             `;
-            document.head.appendChild(style);
-        });
 
-        // Prevent common cheating attempts
-        window.addEventListener('beforeunload', (e) => {
-            if (state.currentScreen === 'assessment') {
-                e.preventDefault();
-                e.returnValue = 'Are you sure you want to leave? Your progress will be lost.';
-                state.cheatingLogs.push({
-                    event: 'page_unload_attempt',
-                    timestamp: new Date().toISOString()
-                });
-                return e.returnValue;
+            document.getElementById('submissionModal').classList.remove('hidden');
+        }
+
+        function closeSubmissionModal() {
+            document.getElementById('submissionModal').classList.add('hidden');
+        }
+
+        function downloadSubmissionReport() {
+            // Generate and download a PDF report
+            alert('Generating PDF report... (Feature to be implemented)');
+        }
+
+        // Questions Management
+        function loadQuestions() {
+            const mockQuestions = [
+                {
+                    id: 1,
+                    title: 'Array Sum of Evens',
+                    difficulty: 'Easy',
+                    language: 'JavaScript',
+                    testCases: 4
+                },
+                {
+                    id: 2,
+                    title: 'String Word Reversal',
+                    difficulty: 'Medium',
+                    language: 'JavaScript',
+                    testCases: 4
+                },
+                {
+                    id: 3,
+                    title: 'Palindrome Finder',
+                    difficulty: 'Hard',
+                    language: 'JavaScript',
+                    testCases: 4
+                }
+            ];
+
+            const questionsList = document.getElementById('questionsList');
+            questionsList.innerHTML = mockQuestions.map(question => `
+                <div class="card" style="margin-bottom: 1rem;">
+                    <div class="card-body" style="padding: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h4 style="margin-bottom: 0.5rem;">${question.title}</h4>
+                                <div style="display: flex; gap: 1rem; align-items: center;">
+                                    <span class="badge badge-${question.difficulty.toLowerCase() === 'easy' ? 'success' : question.difficulty.toLowerCase() === 'medium' ? 'warning' : 'error'}">
+                                        ${question.difficulty}
+                                    </span>
+                                    <span class="badge badge-secondary">${question.language}</span>
+                                    <span style="color: var(--text-secondary); font-size: 0.9rem;">
+                                        ${question.testCases} test cases
+                                    </span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-sm btn-secondary" onclick="editQuestion(${question.id})">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn btn-sm btn-secondary" onclick="deleteQuestion(${question.id})">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showCreateQuestionModal() {
+            document.getElementById('createQuestionModal').classList.remove('hidden');
+        }
+
+        function closeCreateQuestionModal() {
+            document.getElementById('createQuestionModal').classList.add('hidden');
+            document.getElementById('createQuestionForm').reset();
+        }
+
+        function createQuestion() {
+            const form = document.getElementById('createQuestionForm');
+            const formData = new FormData(form);
+            
+            // Here you would typically save to your backend/database
+            alert('Question created successfully!');
+            closeCreateQuestionModal();
+            loadQuestions();
+        }
+
+        function editQuestion(questionId) {
+            alert(`Edit question ${questionId} (Feature to be implemented)`);
+        }
+
+        function deleteQuestion(questionId) {
+            if (confirm('Are you sure you want to delete this question?')) {
+                alert(`Question ${questionId} deleted`);
+                loadQuestions();
             }
-        });
+        }
 
-        // Disable text selection in certain areas
-        document.addEventListener('selectstart', (e) => {
-            if (e.target.closest('.question-nav, .assessment-header')) {
+        // Event Listeners
+        function setupEventListeners() {
+            // Invitation form
+            document.getElementById('invitationForm').addEventListener('submit', (e) => {
                 e.preventDefault();
+                sendInvitation();
+            });
+
+            // Settings form
+            document.getElementById('settingsForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                saveSettings();
+            });
+
+            // Create question form
+            document.getElementById('createQuestionForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                createQuestion();
+            });
+        }
+
+        // Invitation Management
+        function sendInvitation() {
+            const email = document.getElementById('candidateEmail').value;
+            const assessmentType = document.getElementById('assessmentType').value;
+            const duration = document.getElementById('assessmentDuration').value;
+            const message = document.getElementById('personalMessage').value;
+
+            // Generate assessment link
+            const assessmentLink = `${window.location.origin}/index.html?assessment=${assessmentType}&duration=${duration}`;
+
+            // Here you would typically send an email invitation
+            // For now, we'll show the link
+            alert(`Invitation would be sent to ${email}\n\nAssessment Link: ${assessmentLink}`);
+
+            // Reset form
+            document.getElementById('invitationForm').reset();
+        }
+
+        // Settings Management
+        function saveSettings() {
+            const platformName = document.getElementById('platformName').value;
+            const defaultDuration = document.getElementById('defaultDuration').value;
+            const supabaseUrl = document.getElementById('supabaseUrl').value;
+            const supabaseKey = document.getElementById('supabaseKey').value;
+
+            // Save settings (typically to localStorage or backend)
+            const settings = {
+                platformName,
+                defaultDuration,
+                supabaseUrl,
+                supabaseKey: supabaseKey ? '***HIDDEN***' : ''
+            };
+
+            localStorage.setItem('adminSettings', JSON.stringify(settings));
+            alert('Settings saved successfully!');
+        }
+
+        // Load saved settings
+        function loadSettings() {
+            const saved = localStorage.getItem('adminSettings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                document.getElementById('platformName').value = settings.platformName || '';
+                document.getElementById('defaultDuration').value = settings.defaultDuration || '60';
+                document.getElementById('supabaseUrl').value = settings.supabaseUrl || '';
             }
+        }
+
+        // Initialize Supabase if configured
+        function initializeSupabase() {
+            const saved = localStorage.getItem('adminSettings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                if (settings.supabaseUrl && settings.supabaseKey) {
+                    try {
+                        supabaseClient = supabase.createClient(settings.supabaseUrl, settings.supabaseKey);
+                        console.log('Supabase initialized successfully');
+                    } catch (error) {
+                        console.error('Failed to initialize Supabase:', error);
+                    }
+                }
+            }
+        }
+
+        // Export functionality
+        function exportSubmissions() {
+            // Generate CSV export of all submissions
+            const csvContent = "data:text/csv;charset=utf-8," + 
+                "Candidate Name,Email,Assessment,Submitted At,Duration,Score,Cheating Incidents\n" +
+                "John Doe,john@example.com,JavaScript Fundamentals,2024-08-04 14:30,45:30,85%,3\n" +
+                "Jane Smith,jane@example.com,Python Basics,2024-08-04 13:15,38:22,92%,0\n";
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "submissions.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Analytics and Reporting
+        function generateAnalytics() {
+            // Calculate various metrics
+            const analytics = {
+                totalSubmissions: 156,
+                averageScore: 78,
+                completionRate: 89,
+                cheatingRate: 12,
+                popularQuestions: [
+                    { title: 'Array Sum of Evens', attempts: 156 },
+                    { title: 'String Word Reversal', attempts: 142 },
+                    { title: 'Palindrome Finder', attempts: 128 }
+                ]
+            };
+
+            return analytics;
+        }
+
+        // Real-time updates (if using WebSocket/SSE)
+        function setupRealTimeUpdates() {
+            // This would typically connect to a WebSocket or Server-Sent Events
+            // for real-time updates of assessment progress
+            setInterval(() => {
+                // Simulate real-time data updates
+                const activeCount = Math.floor(Math.random() * 20) + 5;
+                document.getElementById('activeAssessments').textContent = activeCount;
+            }, 30000); // Update every 30 seconds
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            initializeSupabase();
+            setupRealTimeUpdates();
         });
 
-        // Disable drag and drop
-        document.addEventListener('dragstart', (e) => {
-            e.preventDefault();
-        });
+        // Utility functions
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleString();
+        }
 
-        document.addEventListener('drop', (e) => {
-            e.preventDefault();
+        function formatDuration(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            
+            if (hours > 0) {
+                return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+            return `${minutes}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function calculateScore(answers, totalQuestions) {
+            // Simple scoring algorithm
+            const correctAnswers = answers.filter(answer => answer.isCorrect).length;
+            return Math.round((correctAnswers / totalQuestions) * 100);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch (e.key) {
+                    case '1':
+                        e.preventDefault();
+                        showSection('dashboard');
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        showSection('submissions');
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        showSection('questions');
+                        break;
+                    case '4':
+                        e.preventDefault();
+                        showSection('invitations');
+                        break;
+                    case '5':
+                        e.preventDefault();
+                        showSection('settings');
+                        break;
+                }
+            }
         });
     </script>
 </body>
