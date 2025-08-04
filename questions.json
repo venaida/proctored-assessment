@@ -1,0 +1,192 @@
+{
+  "assessments": {
+    "javascript_fundamentals": {
+      "title": "JavaScript Fundamentals Assessment",
+      "description": "Test your core JavaScript programming skills",
+      "duration": 60,
+      "questions": [
+        {
+          "id": 1,
+          "title": "Array Sum of Evens",
+          "description": "Write a function that takes an array of integers and returns the sum of all even numbers. Handle edge cases like empty arrays.",
+          "difficulty": "Easy",
+          "language": "javascript",
+          "starter": "function sumEvenNumbers(arr) {\n    // Handle edge cases\n    if (!arr || arr.length === 0) {\n        return 0;\n    }\n    \n    // Your code here\n    \n}",
+          "testCases": [
+            {
+              "input": "[1, 2, 3, 4, 5, 6]",
+              "expected": "12",
+              "description": "Mixed odd and even numbers"
+            },
+            {
+              "input": "[2, 4, 6, 8]",
+              "expected": "20",
+              "description": "All even numbers"
+            },
+            {
+              "input": "[1, 3, 5, 7]",
+              "expected": "0",
+              "description": "All odd numbers"
+            },
+            {
+              "input": "[]",
+              "expected": "0",
+              "description": "Empty array"
+            }
+          ],
+          "hints": [
+            "Use the modulo operator (%) to check if a number is even",
+            "Consider using array methods like filter() and reduce()",
+            "Don't forget to handle edge cases"
+          ]
+        },
+        {
+          "id": 2,
+          "title": "String Word Reversal",
+          "description": "Create a function that reverses each word in a sentence while keeping the word order intact. For example: 'hello world' becomes 'olleh dlrow'.",
+          "difficulty": "Medium",
+          "language": "javascript",
+          "starter": "function reverseWords(sentence) {\n    // Handle edge cases\n    if (!sentence || typeof sentence !== 'string') {\n        return '';\n    }\n    \n    // Your code here\n    \n}",
+          "testCases": [
+            {
+              "input": "'hello world'",
+              "expected": "'olleh dlrow'",
+              "description": "Two words"
+            },
+            {
+              "input": "'javascript is awesome'",
+              "expected": "'tpircsavaj si emosewa'",
+              "description": "Three words"
+            },
+            {
+              "input": "'a'",
+              "expected": "'a'",
+              "description": "Single character"
+            },
+            {
+              "input": "''",
+              "expected": "''",
+              "description": "Empty string"
+            }
+          ],
+          "hints": [
+            "Split the sentence into words first",
+            "Reverse each word individually",
+            "Join the words back together"
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Palindrome Finder",
+          "description": "Implement a function to find the longest palindromic substring in a given string. A palindrome reads the same forwards and backwards.",
+          "difficulty": "Hard",
+          "language": "javascript",
+          "starter": "function longestPalindrome(s) {\n    // Handle edge cases\n    if (!s || s.length < 2) {\n        return s || '';\n    }\n    \n    // Your approach here\n    // Consider: expand around centers method\n    \n}",
+          "testCases": [
+            {
+              "input": "'babad'",
+              "expected": "'bab' or 'aba'",
+              "description": "Multiple valid palindromes"
+            },
+            {
+              "input": "'cbbd'",
+              "expected": "'bb'",
+              "description": "Even length palindrome"
+            },
+            {
+              "input": "'racecar'",
+              "expected": "'racecar'",
+              "description": "Entire string is palindrome"
+            },
+            {
+              "input": "'abc'",
+              "expected": "'a', 'b', or 'c'",
+              "description": "No multi-character palindrome"
+            }
+          ],
+          "hints": [
+            "Try the 'expand around centers' approach",
+            "Check both odd and even length palindromes",
+            "Keep track of the longest palindrome found so far"
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Object Deep Clone",
+          "description": "Write a function that creates a deep copy of a JavaScript object, handling nested objects and arrays. Do not use JSON.parse/stringify.",
+          "difficulty": "Hard",
+          "language": "javascript",
+          "starter": "function deepClone(obj) {\n    // Handle null and non-objects\n    if (obj === null || typeof obj !== 'object') {\n        return obj;\n    }\n    \n    // Your implementation here\n    \n}",
+          "testCases": [
+            {
+              "input": "{ a: 1, b: { c: 2 } }",
+              "expected": "Deep copy with same structure",
+              "description": "Nested object"
+            },
+            {
+              "input": "[1, [2, 3], { a: 4 }]",
+              "expected": "Deep copy of nested array",
+              "description": "Mixed nested structures"
+            },
+            {
+              "input": "null",
+              "expected": "null",
+              "description": "Null input"
+            }
+          ],
+          "hints": [
+            "Handle arrays and objects differently",
+            "Use recursion for nested structures",
+            "Consider using Array.isArray() to detect arrays"
+          ]
+        }
+      ]
+    },
+    "python_basics": {
+      "title": "Python Programming Assessment",
+      "description": "Test your Python programming fundamentals",
+      "duration": 45,
+      "questions": [
+        {
+          "id": 1,
+          "title": "List Comprehensions",
+          "description": "Write a function that uses list comprehension to filter and transform a list of numbers. Return squares of even numbers only.",
+          "difficulty": "Medium",
+          "language": "python",
+          "starter": "def square_evens(numbers):\n    \"\"\"\n    Return a list of squares of even numbers from the input list.\n    \n    Args:\n        numbers: List of integers\n    \n    Returns:\n        List of squared even numbers\n    \"\"\"\n    # Your code here\n    pass",
+          "testCases": [
+            {
+              "input": "[1, 2, 3, 4, 5, 6]",
+              "expected": "[4, 16, 36]",
+              "description": "Mixed numbers"
+            },
+            {
+              "input": "[1, 3, 5]",
+              "expected": "[]",
+              "description": "All odd numbers"
+            },
+            {
+              "input": "[]",
+              "expected": "[]",
+              "description": "Empty list"
+            }
+          ],
+          "hints": [
+            "Use list comprehension syntax: [expression for item in iterable if condition]",
+            "Check for even numbers using modulo operator",
+            "Square the number in the expression part"
+          ]
+        }
+      ]
+    }
+  },
+  "settings": {
+    "defaultDuration": 60,
+    "allowedLanguages": ["javascript", "python", "java", "cpp"],
+    "maxQuestions": 10,
+    "autoSubmitOnTimeup": true,
+    "webcamRequired": true,
+    "tabSwitchingAllowed": false,
+    "themes": ["github", "monokai", "material", "dracula"]
+  }
+}
