@@ -1,7 +1,10 @@
 // === CONFIG ===
 const supabaseUrl = "https://ytoidmelmialrjfqyhet.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0b2lkbWVsbWlhbHJqZnF5aGV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODcwNjI1NDIsImV4cCI6MjAwMjYzODU0Mn0.DEMO_KEY_REPLACE_WITH_REAL"; // You need to complete this
+
+// Fix: Proper Supabase client creation
+const { createClient } = supabase;
+const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
 // === UI ===
 const app = document.getElementById("app");
@@ -32,7 +35,7 @@ async function startAssessment() {
   currentUser.answers = Array(questionLines.length).fill("");
   currentUser.cheating = [];
 
-  setupRecorder();
+  await setupRecorder();
   beginTimer(duration);
   renderAssessment();
 }
@@ -44,7 +47,7 @@ function renderAssessment() {
     html += `
       <div class="question-block">
         <p><strong>Question ${i + 1}:</strong> ${q}</p>
-        <textarea id="answer-${i}"></textarea>
+        <textarea id="answer-${i}" placeholder="Write your code here..."></textarea>
       </div>
     `;
   });
@@ -52,10 +55,23 @@ function renderAssessment() {
   html += `<button onclick="submitAssessment()">Submit</button>`;
   app.innerHTML = html;
 
+  // Fix: Properly initialize CodeMirror editors
   currentUser.questions.forEach((_, i) => {
     const textarea = document.getElementById(`answer-${i}`);
-    textarea.addEventListener("input", e => {
-      currentUser.answers[i] = e.target.value;
+    
+    // Create CodeMirror editor
+    const editor = CodeMirror.fromTextArea(textarea, {
+      lineNumbers: true,
+      mode: "javascript",
+      theme: "default",
+      indentUnit: 2,
+      tabSize: 2,
+      lineWrapping: true
+    });
+
+    // Update answers when editor content changes
+    editor.on("change", () => {
+      currentUser.answers[i] = editor.getValue();
     });
   });
 }
@@ -72,6 +88,7 @@ function beginTimer(durationMinutes) {
   window.addEventListener(event, () => {
     const time = new Date().toISOString();
     currentUser.cheating.push({ event, time });
+    console.log("Cheating detected:", event, time);
   });
 });
 
@@ -79,35 +96,85 @@ function beginTimer(durationMinutes) {
 async function setupRecorder() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    videoChunks = []; // Reset video chunks
     mediaRecorder = new MediaRecorder(stream);
-    mediaRecorder.ondataavailable = e => videoChunks.push(e.data);
+    
+    mediaRecorder.ondataavailable = e => {
+      if (e.data.size > 0) {
+        videoChunks.push(e.data);
+      }
+    };
+    
     mediaRecorder.onstop = async () => {
       const blob = new Blob(videoChunks, { type: "video/webm" });
       const fileName = `video-${Date.now()}.webm`;
-      const { data, error } = await supabase.storage.from("recordings").upload(fileName, blob, {
-        contentType: "video/webm"
-      });
-      if (!error) currentUser.video = fileName;
+      
+      try {
+        const { data, error } = await supabaseClient.storage
+          .from("recordings")
+          .upload(fileName, blob, {
+            contentType: "video/webm"
+          });
+        
+        if (!error) {
+          currentUser.video = fileName;
+          console.log("Video uploaded:", fileName);
+        } else {
+          console.error("Video upload error:", error);
+        }
+      } catch (err) {
+        console.error("Video upload failed:", err);
+      }
     };
+    
     mediaRecorder.start();
+    console.log("Recording started");
   } catch (err) {
+    console.error("Webcam setup failed:", err);
     alert("Webcam access denied or unavailable.");
   }
 }
 
 // === Submit ===
 async function submitAssessment() {
+  if (!confirm("Are you sure you want to submit your assessment?")) {
+    return;
+  }
+
+  // Stop recording
   if (mediaRecorder && mediaRecorder.state === "recording") {
     mediaRecorder.stop();
   }
 
-  const { error } = await supabase.from("submissions").insert({
+  const submissionData = {
     name: currentUser.name,
     cheating_logs: currentUser.cheating,
     questions: currentUser.questions,
     responses: currentUser.answers,
-    video: currentUser.video || null
-  });
+    video: currentUser.video || null,
+    submitted_at: new Date().toISOString()
+  };
 
-  app.innerHTML = `<h2>Submitted successfully. Thank you!</h2>`;
+  try {
+    const { data, error } = await supabaseClient
+      .from("submissions")
+      .insert(submissionData);
+
+    if (error) {
+      console.error("Submission error:", error);
+      alert("Submission failed. Please try again.");
+    } else {
+      app.innerHTML = `<h2>Submitted successfully. Thank you!</h2>`;
+      console.log("Submission successful:", data);
+    }
+  } catch (err) {
+    console.error("Submission failed:", err);
+    alert("Submission failed. Please check your connection.");
+  }
 }
+
+// === Initialize App ===
+// Fix: Call showIntro when page loads
+document.addEventListener("DOMContentLoaded", () => {
+  showIntro();
+});
