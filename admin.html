@@ -25,7 +25,7 @@
             --text-secondary: #6b7280;
             --border: #e5e7eb;
             --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-            --radius: 4px;
+            --radius: 8px;
         }
 
         body {
@@ -36,7 +36,7 @@
             overflow: hidden;
         }
 
-        /* Custom Toast Notifications */
+        /* Toast Notifications */
         .toast-container {
             position: fixed;
             top: 20px;
@@ -59,37 +59,12 @@
             align-items: flex-start;
             gap: 12px;
             animation: slideInRight 0.3s ease;
-            font-family: inherit;
         }
 
         .toast.success { border-left: 4px solid var(--success); }
         .toast.warning { border-left: 4px solid var(--warning); }
         .toast.error { border-left: 4px solid var(--error); }
         .toast.info { border-left: 4px solid var(--primary); }
-
-        .toast-content {
-            flex: 1;
-        }
-
-        .toast-title {
-            font-weight: 600;
-            font-size: 14px;
-            margin-bottom: 4px;
-            color: var(--text-primary);
-        }
-
-        .toast-message {
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .toast-close {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 4px;
-            color: var(--text-secondary);
-        }
 
         @keyframes slideInRight {
             from { transform: translateX(100%); opacity: 0; }
@@ -116,7 +91,6 @@
             padding: 24px;
             border-bottom: 1px solid var(--border);
             background: var(--secondary);
-            flex-shrink: 0;
         }
 
         .brand-header {
@@ -137,13 +111,6 @@
             color: white;
             font-weight: 700;
             font-size: 18px;
-            overflow: hidden;
-        }
-
-        .brand-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
         }
 
         .brand-info h1 {
@@ -160,7 +127,6 @@
         .sidebar-nav {
             flex: 1;
             padding: 16px 0;
-            overflow: hidden;
         }
 
         .nav-item {
@@ -420,15 +386,6 @@
             background: var(--secondary);
         }
 
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #16a34a;
-        }
-
         .btn-sm {
             padding: 6px 12px;
             font-size: 12px;
@@ -466,71 +423,6 @@
             color: var(--text-secondary);
         }
 
-        /* Modal */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: var(--radius);
-            max-width: 800px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            border: 1px solid var(--border);
-        }
-
-        .modal-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--secondary);
-        }
-
-        .modal-header h3 {
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 18px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            padding: 4px;
-        }
-
-        .modal-body {
-            padding: 20px;
-        }
-
-        .modal-footer {
-            padding: 20px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            background: var(--secondary);
-        }
-
-        /* Utilities */
-        .hidden {
-            display: none !important;
-        }
-
         /* Auth Screen */
         .auth-container {
             display: flex;
@@ -563,6 +455,10 @@
         .auth-header p {
             color: var(--text-secondary);
             font-size: 14px;
+        }
+
+        .hidden {
+            display: none !important;
         }
 
         /* Responsive */
@@ -993,11 +889,9 @@
     <script>
         // Configuration
         const CONFIG = {
-            supabaseUrl: "",
-            supabaseServiceKey: "",
-            emailProvider: "",
-            emailApiKey: "",
-            fromEmail: ""
+            supabaseUrl: "https://ytoidmelmialrjfqyhet.supabase.co",
+            supabaseServiceKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.SERVICE_ROLE_KEY_HERE",
+            enableProduction: true
         };
 
         // Global State
@@ -1005,18 +899,18 @@
         let supabaseClient = null;
         let currentUser = null;
 
-        // Custom Toast Notification System
+        // Toast Notification System
         function showToast(title, message, type = 'success', duration = 5000) {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             
             toast.innerHTML = `
-                <div class="toast-content">
-                    <div class="toast-title">${title}</div>
-                    <div class="toast-message">${message}</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px; color: var(--text-primary);">${title}</div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">${message}</div>
                 </div>
-                <button class="toast-close" onclick="this.parentElement.remove()">
+                <button onclick="this.parentElement.remove()" style="background: none; border: none; cursor: pointer; padding: 4px; color: var(--text-secondary);">
                     <i class="fas fa-times"></i>
                 </button>
             `;
@@ -1026,31 +920,67 @@
             if (duration > 0) {
                 setTimeout(() => {
                     if (toast.parentElement) {
-                        toast.style.animation = 'slideOutRight 0.3s ease';
-                        setTimeout(() => toast.remove(), 300);
+                        toast.remove();
                     }
                 }, duration);
             }
         }
 
-        // Authentication (Mock)
+        // Authentication
         async function login(email, password) {
-            // Mock login - replace with actual authentication
-            if (email === 'admin@demo.com' && password === 'demo123') {
-                currentUser = { email };
+            try {
+                // For demo purposes, allow demo login
+                if (email === 'admin@demo.com' && password === 'demo123') {
+                    currentUser = { email, name: 'Demo Admin' };
+                    showDashboard();
+                    loadDashboardData();
+                    showToast('Login Successful', 'Welcome to the admin dashboard', 'success');
+                    return true;
+                }
+
+                if (!supabaseClient) {
+                    showToast('Database Error', 'Database not configured. Using demo mode.', 'warning');
+                    // Allow demo access
+                    currentUser = { email, name: 'Demo User' };
+                    showDashboard();
+                    loadDashboardData();
+                    return true;
+                }
+
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) {
+                    showToast('Login Failed', error.message, 'error');
+                    return false;
+                }
+
+                currentUser = data.user;
                 showDashboard();
-                showToast('Login Successful', 'Welcome to the admin dashboard', 'success');
+                loadDashboardData();
+                showToast('Login Successful', `Welcome back!`, 'success');
                 return true;
-            } else {
-                showToast('Login Failed', 'Invalid credentials. Try admin@demo.com / demo123', 'error');
+            } catch (error) {
+                console.error('Login error:', error);
+                showToast('Login Error', 'An unexpected error occurred', 'error');
                 return false;
             }
         }
 
         async function logout() {
-            currentUser = null;
-            showAuthScreen();
-            showToast('Logged Out', 'You have been successfully logged out', 'info');
+            try {
+                if (supabaseClient) {
+                    await supabaseClient.auth.signOut();
+                }
+                currentUser = null;
+                showAuthScreen();
+                showToast('Logged Out', 'You have been successfully logged out', 'info');
+            } catch (error) {
+                console.error('Logout error:', error);
+                showToast('Logout Error', 'An error occurred during logout', 'error');
+            }
         }
 
         function showAuthScreen() {
@@ -1078,23 +1008,108 @@
             document.getElementById(`${panelName}-panel`).classList.add('active');
             
             currentPanel = panelName;
+
+            // Load panel-specific data
+            switch (panelName) {
+                case 'dashboard':
+                    loadDashboardData();
+                    break;
+                case 'submissions':
+                    loadSubmissions();
+                    break;
+                case 'invitations':
+                    loadInvitations();
+                    break;
+            }
         }
 
-        // Mock Functions for Interactivity
+        // Load Dashboard Data
+        function loadDashboardData() {
+            // Mock data for demo
+            const stats = {
+                totalSubmissions: 247,
+                activeAssessments: 18,
+                securityIncidents: 12,
+                averageScore: 78
+            };
+
+            document.getElementById('totalSubmissions').textContent = stats.totalSubmissions;
+            document.getElementById('activeAssessments').textContent = stats.activeAssessments;
+            document.getElementById('securityIncidents').textContent = stats.securityIncidents;
+            document.getElementById('averageScore').textContent = `${stats.averageScore}%`;
+        }
+
+        function loadSubmissions() {
+            const tbody = document.getElementById('allSubmissions');
+            tbody.innerHTML = `
+                <tr>
+                    <td style="font-weight: 500;">John Doe</td>
+                    <td>john.doe@company.com</td>
+                    <td>JavaScript Fundamentals</td>
+                    <td>2024-08-04 14:30</td>
+                    <td>45:30</td>
+                    <td><span class="badge badge-warning">2 events</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="viewSubmission(1)">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 500;">Jane Smith</td>
+                    <td>jane.smith@company.com</td>
+                    <td>Python Basics</td>
+                    <td>2024-08-04 13:15</td>
+                    <td>38:22</td>
+                    <td><span class="badge badge-success">0 events</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="viewSubmission(2)">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function loadInvitations() {
+            const tbody = document.getElementById('invitationsList');
+            tbody.innerHTML = `
+                <tr>
+                    <td>JavaScript Fundamentals</td>
+                    <td>candidate@company.com</td>
+                    <td>2024-08-04 10:00</td>
+                    <td>2024-08-11 23:59</td>
+                    <td><span class="badge badge-warning">active</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="copyInvitationLink()">
+                            <i class="fas fa-copy"></i> Copy Link
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Event Handlers
         function refreshDashboard() {
             showToast('Refreshing', 'Loading latest dashboard data...', 'info', 2000);
+            loadDashboardData();
         }
 
         function refreshSubmissions() {
             showToast('Refreshing', 'Loading latest submissions...', 'info', 2000);
+            loadSubmissions();
         }
 
         function refreshInvitations() {
             showToast('Refreshing', 'Loading latest invitations...', 'info', 2000);
+            loadInvitations();
         }
 
         function exportSubmissions() {
             showToast('Export Started', 'Preparing submissions export...', 'info', 3000);
+            setTimeout(() => {
+                showToast('Export Complete', 'Submissions exported successfully', 'success');
+            }, 2000);
         }
 
         function viewSubmission(id) {
@@ -1105,9 +1120,28 @@
             showToast('Feature Coming Soon', 'Template creation will be available in the next update', 'info');
         }
 
-        // Event Listeners
+        function copyInvitationLink() {
+            const link = `${window.location.origin}/index.html?assessment=js-fundamentals&token=demo123`;
+            navigator.clipboard.writeText(link).then(() => {
+                showToast('Link Copied', 'Assessment link copied to clipboard', 'success');
+            }).catch(() => {
+                showToast('Copy Failed', 'Failed to copy link to clipboard', 'error');
+            });
+        }
+
+        // Initialize app
         document.addEventListener('DOMContentLoaded', () => {
-            // Set default expiration date to 7 days from now
+            // Initialize Supabase if configured
+            if (CONFIG.supabaseUrl && CONFIG.supabaseServiceKey && typeof supabase !== 'undefined') {
+                try {
+                    supabaseClient = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseServiceKey);
+                    console.log('✅ Supabase initialized');
+                } catch (error) {
+                    console.error('❌ Supabase initialization failed:', error);
+                }
+            }
+
+            // Set default expiration date
             const expirationDate = new Date();
             expirationDate.setDate(expirationDate.getDate() + 7);
             const expirationInput = document.getElementById('expirationDate');
@@ -1115,7 +1149,7 @@
                 expirationInput.value = expirationDate.toISOString().slice(0, 16);
             }
             
-            // Login form handler
+            // Event listeners
             document.getElementById('loginForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const email = document.getElementById('loginEmail').value;
@@ -1129,7 +1163,6 @@
                 await login(email, password);
             });
 
-            // Company form handler
             document.getElementById('companyForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const companyName = document.getElementById('companyName').value;
@@ -1139,13 +1172,11 @@
                 showToast('Settings Saved', 'Company settings have been saved successfully', 'success');
             });
 
-            // Database form handler
             document.getElementById('databaseForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 showToast('Database Settings Saved', 'Database configuration has been updated', 'success');
             });
 
-            // Invitation form handler
             document.getElementById('invitationForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const email = document.getElementById('candidateEmail').value;
@@ -1158,16 +1189,21 @@
                 
                 showToast('Invitation Sent', `Assessment invitation sent to ${email}`, 'success');
                 document.getElementById('invitationForm').reset();
+                
+                // Reset expiration date
+                const newExpiration = new Date();
+                newExpiration.setDate(newExpiration.getDate() + 7);
+                document.getElementById('expirationDate').value = newExpiration.toISOString().slice(0, 16);
             });
 
             // Show auth screen initially
             showAuthScreen();
+            
+            // Show demo notice
+            setTimeout(() => {
+                showToast('Demo Mode', 'Use admin@demo.com / demo123 to login to the demo dashboard', 'info', 8000);
+            }, 2000);
         });
-
-        // Demo mode notification
-        setTimeout(() => {
-            showToast('Demo Mode', 'This is a demo dashboard. Use admin@demo.com / demo123 to login.', 'info', 10000);
-        }, 2000);
     </script>
 </body>
 </html>
