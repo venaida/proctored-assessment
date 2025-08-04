@@ -1,0 +1,32 @@
+body {
+  font-family: sans-serif;
+  background: #f8f9fa;
+  margin: 0;
+  padding: 20px;
+}
+
+#app {
+  max-width: 800px;
+  margin: auto;
+}
+
+textarea, .CodeMirror {
+  width: 100%;
+  height: 300px;
+}
+
+button {
+  padding: 10px 20px;
+  margin: 10px 0;
+  background-color: #0069d9;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.question-block {
+  margin-bottom: 30px;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+}
