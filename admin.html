@@ -1,4 +1,2130 @@
-<!DOCTYPE html>
+<div class="form-group">
+                                <label class="form-label">Email Service Provider</label>
+                                <select id="emailProvider" class="form-select">
+                                    <option value="sendgrid">SendGrid</option>
+                                    <option value="mailgun">Mailgun</option>
+                                    <option value="ses">Amazon SES</option>
+                                    <option value="smtp">Custom SMTP</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">API Key / SMTP Password</label>
+                                <input type="password" id="emailApiKey" class="form-input" placeholder="Enter API key or SMTP password">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">From Email Address</label>
+                                <input type="email" id="fromEmail" class="form-input" placeholder="assessments@yourcompany.com">
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Email Settings
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submission Detail Modal -->
+    <div id="submissionModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Submission Details</h3>
+                <button class="modal-close" onclick="closeSubmissionModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="submissionModalBody">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSubmissionModal()">Close</button>
+                <button class="btn btn-primary" onclick="generatePDFReport()">
+                    <i class="fas fa-file-pdf"></i> Generate PDF Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invitation Links Modal -->
+    <div id="invitationLinksModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Assessment Invitations Created</h3>
+                <button class="modal-close" onclick="closeInvitationLinksModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="invitationLinksBody">
+                <!-- Links will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeInvitationLinksModal()">Close</button>
+                <button class="btn btn-primary" onclick="copyAllLinks()">
+                    <i class="fas fa-copy"></i> Copy All Links
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Template Modal -->
+    <div id="createTemplateModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Assessment Template</h3>
+                <button class="modal-close" onclick="closeCreateTemplateModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createTemplateForm">
+                    <div class="form-group">
+                        <label class="form-label">Template Name</label>
+                        <input type="text" id="templateName" class="form-input" placeholder="e.g., Senior Frontend Developer" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea id="templateDescription" class="form-textarea" placeholder="Brief description of the assessment" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Default Duration (minutes)</label>
+                        <select id="templateDuration" class="form-select" required>
+                            <option value="30">30 minutes</option>
+                            <option value="45">45 minutes</option>
+                            <option value="60" selected>60 minutes</option>
+                            <option value="90">90 minutes</option>
+                            <option value="120">120 minutes</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Programming Language</label>
+                        <select id="templateLanguage" class="form-select" required>
+                            <option value="javascript">JavaScript</option>
+                            <option value="python">Python</option>
+                            <option value="java">Java</option>
+                            <option value="cpp">C++</option>
+                            <option value="csharp">C#</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCreateTemplateModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="createTemplate()">
+                    <i class="fas fa-plus"></i> Create Template
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- External Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            supabaseUrl: "",
+            supabaseServiceKey: "",
+            emailProvider: "",
+            emailApiKey: "",
+            fromEmail: ""
+        };
+
+        // Global State
+        let currentSection = 'dashboard';
+        let supabaseClient = null;
+        let allSubmissions = [];
+        let allInvitations = [];
+
+        // Toast Notification System
+        function showToast(title, message, type = 'success', duration = 5000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+            container.appendChild(toast);
+
+            if (duration > 0) {
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.style.animation = 'slideOutRight 0.3s ease';
+                        setTimeout(() => toast.remove(), 300);
+                    }
+                }, duration);
+            }
+        }
+
+        // Initialize admin dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            initializeSupabase();
+            loadDashboardData();
+            setupEventListeners();
+            
+            // Set default expiration date to 7 days from now
+            const expirationDate = new Date();
+            expirationDate.setDate(expirationDate.getDate() + 7);
+            document.getElementById('expirationDate').value = expirationDate.toISOString().slice(0, 16);
+        });
+
+        // Section Management
+        function showSection(sectionName) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+            });
+
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            document.getElementById(`${sectionName}-section`).classList.remove('hidden');
+            event.target.classList.add('active');
+            
+            currentSection = sectionName;
+
+            switch (sectionName) {
+                case 'submissions':
+                    loadSubmissions();
+                    break;
+                case 'invitations':
+                    loadInvitations();
+                    break;
+                case 'templates':
+                    loadTemplates();
+                    break;
+            }
+        }
+
+        // Dashboard Functions
+        function loadDashboardData() {
+            updateDashboardStats({
+                totalSubmissions: 247,
+                activeAssessments: 18,
+                securityIncidents: 12,
+                averageScore: 78
+            });
+
+            loadRecentSubmissions();
+        }
+
+        function updateDashboardStats(stats) {
+            document.getElementById('totalSubmissions').textContent = stats.totalSubmissions;
+            document.getElementById('activeAssessments').textContent = stats.activeAssessments;
+            document.getElementById('securityIncidents').textContent = stats.securityIncidents;
+            document.getElementById('averageScore').textContent = `${stats.averageScore}%`;
+        }
+
+        function loadRecentSubmissions() {
+            const mockSubmissions = [
+                {
+                    id: 1,
+                    candidateName: 'John Doe',
+                    assessment: 'JavaScript Fundamentals',
+                    submittedAt: '2024-08-04 14:30',
+                    duration: '45:30',
+                    securityEvents: 2,
+                    status: 'completed'
+                },
+                {
+                    id: 2,
+                    candidateName: 'Jane Smith',
+                    assessment: 'Python Basics',
+                    submittedAt: '2024-08-04 13:15',
+                    duration: '38:22',
+                    securityEvents: 0,
+                    status: 'completed'
+                },
+                {
+                    id: 3,
+                    candidateName: 'Mike Johnson',
+                    assessment: 'Senior Dev Challenge',
+                    submittedAt: '2024-08-04 12:45',
+                    duration: '82:15',
+                    securityEvents: 5,
+                    status: 'flagged'
+                }
+            ];
+
+            const tbody = document.getElementById('recentSubmissions');
+            tbody.innerHTML = mockSubmissions.map(submission => `
+                <tr>
+                    <td style="font-weight: 500;">${submission.candidateName}</td>
+                    <td>${submission.assessment}</td>
+                    <td>${submission.submittedAt}</td>
+                    <td>${submission.duration}</td>
+                    <td>
+                        <span class="badge ${submission.securityEvents > 0 ? 'badge-warning' : 'badge-success'}">
+                            ${submission.securityEvents} events
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="viewSubmission(${submission.id})">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function refreshDashboard() {
+            showToast('Refreshing', 'Loading latest dashboard data...', 'info', 2000);
+            loadDashboardData();
+        }
+
+        // Submissions Management
+        function loadSubmissions() {
+            const mockData = [
+                {
+                    id: 1,
+                    candidateName: 'John Doe',
+                    candidateEmail: 'john.doe@example.com',
+                    assessment: 'JavaScript Fundamentals',
+                    submittedAt: '2024-08-04 14:30',
+                    duration: '45:30',
+                    securityEvents: 2,
+                    hasVideo: true
+                },
+                {
+                    id: 2,
+                    candidateName: 'Jane Smith',
+                    candidateEmail: 'jane.smith@example.com',
+                    assessment: 'Python Basics',
+                    submittedAt: '2024-08-04 13:15',
+                    duration: '38:22',
+                    securityEvents: 0,
+                    hasVideo: true
+                }
+            ];
+
+            allSubmissions = mockData;
+            const tbody = document.getElementById('allSubmissions');
+            tbody.innerHTML = mockData.map(submission => `
+                <tr>
+                    <td style="font-weight: 500;">${submission.candidateName}</td>
+                    <td>${submission.candidateEmail}</td>
+                    <td>${submission.assessment}</td>
+                    <td>${submission.submittedAt}</td>
+                    <td>${submission.duration}</td>
+                    <td>
+                        <span class="badge ${submission.securityEvents > 0 ? 'badge-warning' : 'badge-success'}">
+                            ${submission.securityEvents} events
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="viewSubmission(${submission.id})">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function refreshSubmissions() {
+            showToast('Refreshing', 'Loading latest submissions...', 'info', 2000);
+            loadSubmissions();
+        }
+
+        function exportSubmissions() {
+            const csvContent = "data:text/csv;charset=utf-8," + 
+                "Candidate Name,Email,Assessment,Submitted At,Duration,Security Events\n" +
+                allSubmissions.map(s => 
+                    `"${s.candidateName}","${s.candidateEmail}","${s.assessment}","${s.submittedAt}","${s.duration}",${s.securityEvents}`
+                ).join('\n');
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `submissions-${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast('Export Complete', 'Submissions exported to CSV file', 'success');
+        }
+
+        function viewSubmission(submissionId) {
+            const submissionData = {
+                candidateName: 'John Doe',
+                candidateEmail: 'john.doe@example.com',
+                assessment: 'JavaScript Fundamentals',
+                submittedAt: '2024-08-04 14:30',
+                duration: '45:30',
+                answers: [
+                    {
+                        question: 'Array Manipulation',
+                        answer: 'function sumEvenNumbers(arr) {\n    return arr.filter(n => n % 2 === 0).reduce((sum, n) => sum + n, 0);\n}'
+                    },
+                    {
+                        question: 'String Processing',
+                        answer: 'function reverseWords(sentence) {\n    return sentence.split(\' \').map(word => word.split(\'\').reverse().join(\'\')).join(\' \');\n}'
+                    }
+                ],
+                securityLogs: [
+                    {
+                        event: 'tab_hidden',
+                        timestamp: '2024-08-04 14:15:32',
+                        details: 'User switched to another tab'
+                    },
+                    {
+                        event: 'window_blur',
+                        timestamp: '2024-08-04 14:22:18',
+                        details: 'Window lost focus'
+                    }
+                ],
+                hasVideo: true
+            };
+
+            showSubmissionModal(submissionData);
+        }
+
+        function showSubmissionModal(data) {
+            const modalBody = document.getElementById('submissionModalBody');
+            modalBody.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 12px; font-size: 14px; font-weight: 600;">Candidate Information</h4>
+                    <div style="background: var(--accent); padding: 16px; border-radius: var(--radius); font-size: 13px;">
+                        <p><strong>Name:</strong> ${data.candidateName}</p>
+                        <p><strong>Email:</strong> ${data.candidateEmail}</p>
+                        <p><strong>Assessment:</strong> ${data.assessment}</p>
+                        <p><strong>Submitted:</strong> ${data.submittedAt}</p>
+                        <p><strong>Duration:</strong> ${data.duration}</p>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 12px; font-size: 14px; font-weight: 600;">Submitted Answers</h4>
+                    ${data.answers.map((answer, index) => `
+                        <div style="margin-bottom: 16px;">
+                            <h5 style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--primary);">
+                                Question ${index + 1}: ${answer.question}
+                            </h5>
+                            <div class="code-viewer">${answer.answer}</div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 12px; font-size: 14px; font-weight: 600;">Security Events (${data.securityLogs.length})</h4>
+                    ${data.securityLogs.length > 0 ? data.securityLogs.map(log => `
+                        <div class="cheating-log">
+                            <div class="cheating-log-header">
+                                <span class="cheating-log-event">${log.event.replace('_', ' ')}</span>
+                                <span class="cheating-log-time">${log.timestamp}</span>
+                            </div>
+                            <p style="margin: 4px 0 0 0; color: var(--text-secondary); font-size: 12px;">
+                                ${log.details}
+                            </p>
+                        </div>
+                    `).join('') : '<p style="color: var(--text-secondary); font-size: 13px;">No security incidents detected.</p>'}
+                </div>
+
+                ${data.hasVideo ? `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 12px; font-size: 14px; font-weight: 600;">Video Recording</h4>
+                        <div style="background: var(--accent); padding: 16px; border-radius: var(--radius); text-align: center;">
+                            <i class="fas fa-video" style="font-size: 24px; color: var(--text-secondary); margin-bottom: 8px;"></i>
+                            <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">
+                                Video recording available for review
+                            </p>
+                            <button class="btn btn-secondary btn-sm" style="margin-top: 8px;">
+                                <i class="fas fa-play"></i> Play Recording
+                            </button>
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+
+            document.getElementById('submissionModal').classList.remove('hidden');
+        }
+
+        function closeSubmissionModal() {
+            document.getElementById('submissionModal').classList.add('hidden');
+        }
+
+        function generatePDFReport() {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Add header
+                doc.setFontSize(20);
+                doc.text('Assessment Report', 20, 30);
+                
+                doc.setFontSize(12);
+                doc.text('Candidate: John Doe', 20, 50);
+                doc.text('Email: john.doe@example.com', 20, 60);
+                doc.text('Assessment: JavaScript Fundamentals', 20, 70);
+                doc.text('Submitted: 2024-08-04 14:30', 20, 80);
+                doc.text('Duration: 45:30', 20, 90);
+                
+                // Add answers section
+                doc.setFontSize(14);
+                doc.text('Submitted Answers', 20, 110);
+                
+                doc.setFontSize(10);
+                doc.text('Question 1: Array Manipulation', 20, 130);
+                doc.text('function sumEvenNumbers(arr) {', 25, 140);
+                doc.text('    return arr.filter(n => n % 2 === 0).reduce((sum, n) => sum + n, 0);', 25, 150);
+                doc.text('}', 25, 160);
+                
+                // Add security events
+                doc.setFontSize(14);
+                doc.text('Security Events', 20, 180);
+                
+                doc.setFontSize(10);
+                doc.text('• Tab hidden at 2024-08-04 14:15:32', 20, 200);
+                doc.text('• Window blur at 2024-08-04 14:22:18', 20, 210);
+                
+                // Save the PDF
+                doc.save('assessment-report.pdf');
+                
+                showToast('PDF Generated', 'Assessment report downloaded successfully', 'success');
+            } catch (error) {
+                console.error('PDF generation failed:', error);
+                showToast('PDF Error', 'Failed to generate PDF report', 'error');
+            }
+        }
+
+        // Invitations Management
+        function loadInvitations() {
+            const mockInvitations = [
+                {
+                    id: 1,
+                    assessment: 'JavaScript Fundamentals',
+                    candidateEmail: 'john.doe@example.com',
+                    sentAt: new Date(Date.now() - 86400000).toISOString(),
+                    expiresAt: new Date(Date.now() + 518400000).toISOString(),
+                    status: 'completed'
+                },
+                {
+                    id: 2,
+                    assessment: 'Python Basics',
+                    candidateEmail: 'jane.smith@example.com',
+                    sentAt: new Date(Date.now() - 43200000).toISOString(),
+                    expiresAt: new Date(Date.now() + 561600000).toISOString(),
+                    status: 'sent'
+                }
+            ];
+
+            allInvitations = mockInvitations;
+            const tbody = document.getElementById('invitationsList');
+            tbody.innerHTML = mockInvitations.map(inv => `
+                <tr>
+                    <td>${inv.assessment}</td>
+                    <td>${inv.candidateEmail}</td>
+                    <td>${new Date(inv.sentAt).toLocaleString()}</td>
+                    <td>${new Date(inv.expiresAt).toLocaleString()}</td>
+                    <td>
+                        <span class="badge badge-${inv.status === 'sent' ? 'warning' : inv.status === 'completed' ? 'success' : 'secondary'}">
+                            ${inv.status}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="copyInvitationLink(${inv.id})">
+                            <i class="fas fa-copy"></i> Copy Link
+                        </button>
+                        ${inv.status === 'sent' ? `
+                            <button class="btn btn-sm btn-secondary" onclick="resendInvitation(${inv.id})" style="margin-left: 4px;">
+                                <i class="fas fa-paper-plane"></i> Resend
+                            </button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function refreshInvitations() {
+            showToast('Refreshing', 'Loading latest invitations...', 'info', 2000);
+            loadInvitations();
+        }
+
+        function updateAssessmentPreview() {
+            const checkboxes = document.querySelectorAll('#templateSelector input[type="checkbox"]');
+            const selectedTemplates = Array.from(checkboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+            
+            const preview = document.getElementById('assessmentPreview');
+            
+            if (selectedTemplates.length === 0) {
+                preview.style.display = 'none';
+                return;
+            }
+            
+            const templates = {
+                'js-fundamentals-2024': {
+                    title: 'JavaScript Fundamentals',
+                    description: 'Core JavaScript programming skills',
+                    questions: 3,
+                    duration: 60
+                },
+                'python-basics-2024': {
+                    title: 'Python Basics',
+                    description: 'Python programming fundamentals',
+                    questions: 2,
+                    duration: 45
+                },
+                'senior-dev-2024': {
+                    title: 'Senior Developer Challenge',
+                    description: 'Advanced programming and system design',
+                    questions: 4,
+                    duration: 90
+                }
+            };
+            
+            const totalDuration = selectedTemplates.reduce((sum, id) => sum + templates[id].duration, 0);
+            const totalQuestions = selectedTemplates.reduce((sum, id) => sum + templates[id].questions, 0);
+            
+            preview.innerHTML = `
+                <h4>Selected Assessment Combination</h4>
+                <p>The following templates will be combined into a single assessment:</p>
+                <div class="assessment-meta">
+                    ${selectedTemplates.map(id => `
+                        <div>
+                            <strong>${templates[id].title}</strong><br>
+                            ${templates[id].questions} questions, ${templates[id].duration} min
+                        </div>
+                    `).join('')}
+                    <div style="border: 2px solid var(--primary);">
+                        <strong>Total Assessment</strong><br>
+                        ${totalQuestions} questions, ${totalDuration} min
+                    </div>
+                </div>
+            `;
+            preview.style.display = 'block';
+        }
+
+        function sendInvitations() {
+            const checkboxes = document.querySelectorAll('#templateSelector input[type="checkbox"]');
+            const selectedTemplates = Array.from(checkboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+            
+            const emails = document.getElementById('candidateEmails').value
+                .split('\n')
+                .map(email => email.trim())
+                .filter(email => email && email.includes('@'));
+            
+            const message = document.getElementById('personalMessage').value;
+            const expiration = document.getElementById('expirationDate').value;
+
+            if (selectedTemplates.length === 0) {
+                showToast('Validation Error', 'Please select at least one assessment template.', 'error');
+                return;
+            }
+
+            if (emails.length === 0) {
+                showToast('Validation Error', 'Please enter at least one valid email address.', 'error');
+                return;
+            }
+
+            if (!expiration) {
+                showToast('Validation Error', 'Please set an expiration date.', 'error');
+                return;
+            }
+
+            const invitations = emails.map(email => {
+                const token = generateInvitationToken();
+                const assessmentParam = selectedTemplates.join(',');
+                const assessmentLink = `${window.location.origin.replace('/admin.html', '')}/index.html?assessment=${assessmentParam}&token=${token}`;
+                
+                return {
+                    email,
+                    token,
+                    assessmentLink,
+                    templates: selectedTemplates,
+                    message,
+                    expiration,
+                    sentAt: new Date().toISOString(),
+                    status: 'sent'
+                };
+            });
+
+            showInvitationLinksModal(invitations);
+            
+            // Reset form
+            document.getElementById('invitationForm').reset();
+            document.getElementById('assessmentPreview').style.display = 'none';
+            
+            showToast('Invitations Created', `Successfully created ${invitations.length} assessment invitation(s)`, 'success');
+        }
+
+        function generateInvitationToken() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let token = '';
+            for (let i = 0; i < 32; i++) {
+                token += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return token;
+        }
+
+        function showInvitationLinksModal(invitations) {
+            const linksHTML = invitations.map(inv => `
+                <div class="invitation-link">
+                    <div class="invitation-link-header">
+                        <span class="invitation-email">${inv.email}</span>
+                        <button class="btn btn-sm btn-secondary" onclick="copyToClipboard('${inv.assessmentLink}', this)">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <div class="invitation-url">${inv.assessmentLink}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        Templates: ${inv.templates.join(', ')} | Expires: ${new Date(inv.expiration).toLocaleString()}
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('invitationLinksBody').innerHTML = `
+                <div style="background: var(--success); color: white; padding: 16px; border-radius: var(--radius); margin-bottom: 20px; text-align: center;">
+                    <i class="fas fa-check-circle" style="font-size: 24px; margin-bottom: 8px;"></i>
+                    <h4 style="margin-bottom: 4px;">Successfully created ${invitations.length} invitation(s)!</h4>
+                    <p style="margin: 0; opacity: 0.9;">Copy and send these links to your candidates</p>
+                </div>
+                
+                <div style="max-height: 400px; overflow-y: auto;">
+                    ${linksHTML}
+                </div>
+                
+                <div style="background: var(--warning); color: white; padding: 12px; border-radius: var(--radius); margin-top: 16px; font-size: 13px;">
+                    <strong><i class="fas fa-info-circle"></i> Production Note:</strong>
+                    In a production environment, these invitations would be automatically sent via email. For this demo, please copy and share the links manually.
+                </div>
+            `;
+            
+            document.getElementById('invitationLinksModal').classList.remove('hidden');
+        }
+
+        function closeInvitationLinksModal() {
+            document.getElementById('invitationLinksModal').classList.add('hidden');
+        }
+
+        function copyToClipboard(text, button = null) {
+            navigator.clipboard.writeText(text).then(() => {
+                if (button) {
+                    const originalHTML = button.innerHTML;
+                    button.innerHTML = '<i class="fas fa-check"></i> Copied';
+                    button.style.background = 'var(--success)';
+                    button.style.color = 'white';
+                    
+                    setTimeout(() => {
+                        button.innerHTML = originalHTML;
+                        button.style.background = '';
+                        button.style.color = '';
+                    }, 2000);
+                }
+                showToast('Copied', 'Assessment link copied to clipboard', 'success', 2000);
+            }).catch(err => {
+                showToast('Copy Failed', 'Failed to copy to clipboard. Please copy manually.', 'error');
+            });
+        }
+
+        function copyAllLinks() {
+            const links = document.querySelectorAll('.invitation-url');
+            const allLinks = Array.from(links).map(link => link.textContent).join('\n\n');
+            
+            copyToClipboard(allLinks);
+            showToast('All Links Copied', 'All assessment links copied to clipboard', 'success');
+        }
+
+        function copyInvitationLink(invitationId) {
+            const mockLink = `${window.location.origin}/index.html?assessment=js-fundamentals-2024&token=abc123xyz`;
+            copyToClipboard(mockLink);
+        }
+
+        function resendInvitation(invitationId) {
+            showToast('Invitation Resent', 'Assessment invitation has been resent to the candidate', 'success');
+        }
+
+        // Templates Management
+        function loadTemplates() {
+            const mockTemplates = [
+                {
+                    id: 'js-fundamentals-2024',
+                    name: 'JavaScript Fundamentals',
+                    description: 'Core JavaScript programming skills assessment',
+                    duration: 60,
+                    questions: 3,
+                    language: 'JavaScript',
+                    difficulty: 'Mixed'
+                },
+                {
+                    id: 'python-basics-2024',
+                    name: 'Python Basics',
+                    description: 'Python programming fundamentals evaluation',
+                    duration: 45,
+                    questions: 2,
+                    language: 'Python',
+                    difficulty: 'Beginner'
+                },
+                {
+                    id: 'senior-dev-2024',
+                    name: 'Senior Developer Challenge',
+                    description: 'Advanced programming and system design challenges',
+                    duration: 90,
+                    questions: 4,
+                    language: 'JavaScript',
+                    difficulty: 'Advanced'
+                }
+            ];
+
+            const templatesList = document.getElementById('templatesList');
+            templatesList.innerHTML = mockTemplates.map(template => `
+                <div class="card" style="margin-bottom: 16px;">
+                    <div class="card-body" style="padding: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <h4 style="margin-bottom: 8px; font-size: 16px; font-weight: 600;">${template.name}</h4>
+                                <p style="margin-bottom: 12px; color: var(--text-secondary); font-size: 13px;">${template.description}</p>
+                                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                                    <span class="badge badge-secondary">${template.language}</span>
+                                    <span class="badge badge-${template.difficulty.toLowerCase() === 'beginner' ? 'success' : template.difficulty.toLowerCase() === 'mixed' ? 'warning' : 'error'}">
+                                        ${template.difficulty}
+                                    </span>
+                                    <span style="font-size: 12px; color: var(--text-secondary);">
+                                        ${template.questions} questions • ${template.duration} min
+                                    </span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 8px; margin-left: 16px;">
+                                <button class="btn btn-sm btn-secondary" onclick="editTemplate('${template.id}')">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn btn-sm btn-secondary" onclick="duplicateTemplate('${template.id}')">
+                                    <i class="fas fa-copy"></i> Duplicate
+                                </button>
+                                <button class="btn btn-sm btn-secondary" onclick="deleteTemplate('${template.id}')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showCreateTemplateModal() {
+            document.getElementById('createTemplateModal').classList.remove('hidden');
+        }
+
+        function closeCreateTemplateModal() {
+            document.getElementById('createTemplateModal').classList.add('hidden');
+            document.getElementById('createTemplateForm').reset();
+        }
+
+        function createTemplate() {
+            const name = document.getElementById('templateName').value;
+            const description = document.getElementById('templateDescription').value;
+            const duration = document.getElementById('templateDuration').value;
+            const language = document.getElementById('templateLanguage').value;
+
+            if (!name || !description) {
+                showToast('Validation Error', 'Please fill in all required fields.', 'error');
+                return;
+            }
+
+            // In production, this would save to the database
+            showToast('Template Created', `Successfully created template: ${name}`, 'success');
+            closeCreateTemplateModal();
+            loadTemplates();
+        }
+
+        function editTemplate(templateId) {
+            showToast('Edit Template', `Edit template ${templateId} (Feature to be implemented)`, 'info');
+        }
+
+        function duplicateTemplate(templateId) {
+            showToast('Template Duplicated', `Template ${templateId} has been duplicated`, 'success');
+            loadTemplates();
+        }
+
+        function deleteTemplate(templateId) {
+            if (confirm('Are you sure you want to delete this template? This action cannot be undone.')) {
+                showToast('Template Deleted', `Template ${templateId} has been deleted`, 'success');
+                loadTemplates();
+            }
+        }
+
+        // Settings Management
+        function loadSettings() {
+            const saved = localStorage.getItem('adminSettings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                document.getElementById('companyName').value = settings.companyName || '';
+                document.getElementById('platformBranding').value = settings.platformBranding || '';
+                document.getElementById('defaultDuration').value = settings.defaultDuration || '60';
+                document.getElementById('supabaseUrl').value = settings.supabaseUrl || '';
+                document.getElementById('emailProvider').value = settings.emailProvider || '';
+                document.getElementById('fromEmail').value = settings.fromEmail || '';
+            }
+        }
+
+        function saveGeneralSettings() {
+            const settings = {
+                companyName: document.getElementById('companyName').value,
+                platformBranding: document.getElementById('platformBranding').value,
+                defaultDuration: document.getElementById('defaultDuration').value
+            };
+
+            const existingSettings = JSON.parse(localStorage.getItem('adminSettings') || '{}');
+            const updatedSettings = { ...existingSettings, ...settings };
+            localStorage.setItem('adminSettings', JSON.stringify(updatedSettings));
+            
+            showToast('Settings Saved', 'General settings have been saved successfully', 'success');
+        }
+
+        function saveDatabaseSettings() {
+            const settings = {
+                supabaseUrl: document.getElementById('supabaseUrl').value,
+                supabaseKey: document.getElementById('supabaseKey').value ? '***HIDDEN***' : ''
+            };
+
+            const existingSettings = JSON.parse(localStorage.getItem('adminSettings') || '{}');
+            const updatedSettings = { ...existingSettings, ...settings };
+            localStorage.setItem('adminSettings', JSON.stringify(updatedSettings));
+            
+            CONFIG.supabaseUrl = document.getElementById('supabaseUrl').value;
+            CONFIG.supabaseServiceKey = document.getElementById('supabaseKey').value;
+            
+            initializeSupabase();
+            showToast('Database Settings Saved', 'Database configuration has been updated', 'success');
+        }
+
+        function saveEmailSettings() {
+            const settings = {
+                emailProvider: document.getElementById('emailProvider').value,
+                emailApiKey: document.getElementById('emailApiKey').value ? '***HIDDEN***' : '',
+                fromEmail: document.getElementById('fromEmail').value
+            };
+
+            const existingSettings = JSON.parse(localStorage.getItem('adminSettings') || '{}');
+            const updatedSettings = { ...existingSettings, ...settings };
+            localStorage.setItem('adminSettings', JSON.stringify(updatedSettings));
+            
+            CONFIG.emailProvider = document.getElementById('emailProvider').value;
+            CONFIG.emailApiKey = document.getElementById('emailApiKey').value;
+            CONFIG.fromEmail = document.getElementById('fromEmail').value;
+            
+            showToast('Email Settings Saved', 'Email configuration has been updated', 'success');
+        }
+
+        // Supabase Integration
+        function initializeSupabase() {
+            if (CONFIG.supabaseUrl && CONFIG.supabaseServiceKey && typeof supabase !== 'undefined') {
+                try {
+                    supabaseClient = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseServiceKey);
+                    console.log('Supabase initialized successfully');
+                    showToast('Database Connected', 'Successfully connected to Supabase database', 'success', 3000);
+                } catch (error) {
+                    console.error('Failed to initialize Supabase:', error);
+                    showToast('Database Error', 'Failed to connect to Supabase database', 'error');
+                }
+            }
+        }
+
+        // Event Listeners
+        function setupEventListeners() {
+            document.getElementById('invitationForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                sendInvitations();
+            });
+
+            document.getElementById('settingsForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                saveGeneralSettings();
+            });
+
+            document.getElementById('databaseForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                saveDatabaseSettings();
+            });
+
+            document.getElementById('emailForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                saveEmailSettings();
+            });
+
+            document.getElementById('createTemplateForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                createTemplate();
+            });
+        }
+
+        // Email Integration Functions
+        async function sendEmailInvitation(email, assessmentLink, personalMessage = '') {
+            if (!CONFIG.emailProvider || !CONFIG.emailApiKey || !CONFIG.fromEmail) {
+                throw new Error('Email configuration not set up');
+            }
+
+            const emailContent = generateEmailTemplate(email, assessmentLink, personalMessage);
+            
+            try {
+                // In production, this would integrate with actual email services
+                switch (CONFIG.emailProvider) {
+                    case 'sendgrid':
+                        return await sendViaEmailService(email, emailContent, 'sendgrid');
+                    case 'mailgun':
+                        return await sendViaEmailService(email, emailContent, 'mailgun');
+                    case 'ses':
+                        return await sendViaEmailService(email, emailContent, 'ses');
+                    default:
+                        throw new Error('Unsupported email provider');
+                }
+            } catch (error) {
+                console.error('Email sending failed:', error);
+                throw error;
+            }
+        }
+
+        function generateEmailTemplate(email, assessmentLink, personalMessage) {
+            return {
+                to: email,
+                from: CONFIG.fromEmail,
+                subject: 'Technical Assessment Invitation - TechAssess Pro',
+                html: `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <style>
+                            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+                            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                            .header { background: #1a1a1a; color: white; padding: 20px; border-radius: 4px 4px 0 0; text-align: center; }
+                            .content { background: white; padding: 30px; border: 1px solid #e5e7eb; border-top: none; }
+                            .button { display: inline-block; background: #1a1a1a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0; }
+                            .footer { background: #f8f9fa; padding: 20px; border-radius: 0 0 4px 4px; text-align: center; font-size: 14px; color: #6b7280; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">
+                                <h1>Technical Assessment Invitation</h1>
+                                <p>TechAssess Pro</p>
+                            </div>
+                            <div class="content">
+                                <p>Hello,</p>
+                                
+                                <p>You've been invited to complete a technical assessment. This is an important step in our evaluation process.</p>
+                                
+                                ${personalMessage ? `<div style="background: #f0f9ff; padding: 15px; border-radius: 4px; margin: 20px 0;"><strong>Personal Message:</strong><br>${personalMessage}</div>` : ''}
+                                
+                                <p><strong>Important Instructions:</strong></p>
+                                <ul>
+                                    <li>The assessment is proctored and requires webcam access</li>
+                                    <li>Do not switch tabs or windows during the assessment</li>
+                                    <li>Ensure you have a stable internet connection</li>
+                                    <li>Complete the assessment in one sitting</li>
+                                </ul>
+                                
+                                <div style="text-align: center; margin: 30px 0;">
+                                    <a href="${assessmentLink}" class="button">Start Assessment</a>
+                                </div>
+                                
+                                <p style="font-size: 14px; color: #6b7280;">
+                                    <strong>Assessment Link:</strong><br>
+                                    <code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px; word-break: break-all;">${assessmentLink}</code>
+                                </p>
+                                
+                                <p>If you have any questions or technical issues, please contact our support team.</p>
+                                
+                                <p>Best regards,<br>The Assessment Team</p>
+                            </div>
+                            <div class="footer">
+                                <p>This is an automated message from TechAssess Pro. Please do not reply to this email.</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `
+            };
+        }
+
+        async function sendViaEmailService(email, emailContent, provider) {
+            // This would be implemented with actual API calls to email services
+            console.log(`Sending email via ${provider} to ${email}`);
+            
+            // Simulate email sending delay
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // For demo purposes, always succeed
+            return { success: true, messageId: `msg_${Date.now()}` };
+        }
+
+        // Real-time updates simulation
+        function setupRealTimeUpdates() {
+            setInterval(() => {
+                // Simulate real-time data updates
+                const activeCount = Math.floor(Math.random() * 25) + 10;
+                const activeElement = document.getElementById('activeAssessments');
+                if (activeElement) {
+                    activeElement.textContent = activeCount;
+                }
+            }, 30000); // Update every 30 seconds
+        }
+
+        // Utility Functions
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleString();
+        }
+
+        function formatDuration(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            
+            if (hours > 0) {
+                return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+            return `${minutes}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Analytics Functions
+        function generateAnalytics() {
+            return {
+                totalSubmissions: 247,
+                averageScore: 78.5,
+                completionRate: 89.2,
+                securityIncidentRate: 12.3,
+                popularAssessments: [
+                    { name: 'JavaScript Fundamentals', count: 156 },
+                    { name: 'Python Basics', count: 91 },
+                    { name: 'Senior Dev Challenge', count: 47 }
+                ],
+                monthlyTrends: {
+                    submissions: [45, 52, 61, 58, 67, 73],
+                    averageScores: [76, 78, 79, 77, 80, 82]
+                }
+            };
+        }
+
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch (e.key) {
+                    case '1':
+                        e.preventDefault();
+                        showSection('dashboard');
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        showSection('submissions');
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        showSection('invitations');
+                        break;
+                    case '4':
+                        e.preventDefault();
+                        showSection('templates');
+                        break;
+                    case '5':
+                        e.preventDefault();
+                        showSection('settings');
+                        break;
+                }
+            }
+        });
+
+        // Initialize real-time updates
+        setupRealTimeUpdates();
+
+        // Security: Prevent common attacks
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        // Auto-save settings on change
+        function autoSaveSettings() {
+            const inputs = document.querySelectorAll('#settings-section input, #settings-section select, #settings-section textarea');
+            inputs.forEach(input => {
+                input.addEventListener('change', () => {
+                    const section = input.closest('.card');
+                    const sectionTitle = section.querySelector('h3').textContent;
+                    
+                    setTimeout(() => {
+                        showToast('Auto-saved', `${sectionTitle} settings auto-saved`, 'info', 2000);
+                    }, 500);
+                });
+            });
+        }
+
+        // Call auto-save setup after DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(autoSaveSettings, 1000);
+        });
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechAssess Pro - Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a1a1a;
+            --primary-hover: #2a2a2a;
+            --secondary: #f8f9fa;
+            --accent: #e9ecef;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --text-primary: #1a1a1a;
+            --text-secondary: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            --radius: 4px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #ffffff;
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            box-shadow: var(--shadow);
+            min-width: 320px;
+            max-width: 400px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            animation: slideInRight 0.3s ease;
+        }
+
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.warning { border-left: 4px solid var(--warning); }
+        .toast.error { border-left: 4px solid var(--error); }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .toast-message {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            color: var(--text-secondary);
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Layout */
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--secondary);
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .brand-logo {
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .sidebar-header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-header p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .sidebar-nav {
+            padding: 16px 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+            background: none;
+            width: 100%;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: var(--secondary);
+            color: var(--primary);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            background: var(--secondary);
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .page-header h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stat-title {
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .stat-icon.primary { background: #f0f0f0; color: var(--primary); }
+        .stat-icon.success { background: #f0fdf4; color: var(--success); }
+        .stat-icon.warning { background: #fefce8; color: var(--warning); }
+        .stat-icon.error { background: #fef2f2; color: var(--error); }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-description {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        /* Tables */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .table th {
+            background: var(--secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+        }
+
+        .table tbody tr:hover {
+            background: var(--secondary);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            background: white;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border: 1px solid transparent;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text-primary);
+            border-color: var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--secondary);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #16a34a;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-success {
+            background: #f0fdf4;
+            color: #166534;
+        }
+
+        .badge-warning {
+            background: #fefce8;
+            color: #854d0e;
+        }
+
+        .badge-error {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .badge-secondary {
+            background: var(--accent);
+            color: var(--text-secondary);
+        }
+
+        /* Assessment Preview */
+        .assessment-preview {
+            background: var(--accent);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .assessment-preview h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        .assessment-preview p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .assessment-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            font-size: 12px;
+        }
+
+        .assessment-meta div {
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius);
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--secondary);
+        }
+
+        .modal-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            background: var(--secondary);
+        }
+
+        /* Invitation Links */
+        .invitation-link {
+            background: var(--accent);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .invitation-link-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .invitation-email {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .invitation-url {
+            font-family: monospace;
+            font-size: 11px;
+            background: white;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            word-break: break-all;
+            margin-bottom: 8px;
+        }
+
+        /* Code Viewer */
+        .code-viewer {
+            background: #f8f9fa;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        /* Cheating Log */
+        .cheating-log {
+            background: #fef2f2;
+            border: 1px solid var(--error);
+            border-left: 4px solid var(--error);
+            border-radius: var(--radius);
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+
+        .cheating-log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .cheating-log-event {
+            font-weight: 600;
+            color: var(--error);
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+
+        .cheating-log-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-family: monospace;
+        }
+
+        /* Utilities */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-layout {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+            }
+            
+            .main-content {
+                padding: 16px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="toastContainer" class="toast-container"></div>
+
+    <div class="admin-layout">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-header">
+                    <div class="brand-logo">TA</div>
+                    <div>
+                        <h1>TechAssess Pro</h1>
+                        <p>Admin Dashboard</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" onclick="showSection('dashboard')">
+                    <i class="fas fa-chart-bar"></i> Dashboard
+                </button>
+                <button class="nav-item" onclick="showSection('submissions')">
+                    <i class="fas fa-file-alt"></i> Submissions
+                </button>
+                <button class="nav-item" onclick="showSection('invitations')">
+                    <i class="fas fa-envelope"></i> Invitations
+                </button>
+                <button class="nav-item" onclick="showSection('templates')">
+                    <i class="fas fa-layer-group"></i> Templates
+                </button>
+                <button class="nav-item" onclick="showSection('settings')">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="section">
+                <div class="page-header">
+                    <h2>Dashboard</h2>
+                    <p>Overview of assessment activity and performance metrics</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Total Submissions</span>
+                            <div class="stat-icon primary">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value" id="totalSubmissions">0</div>
+                        <div class="stat-description">All time submissions</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Active Assessments</span>
+                            <div class="stat-icon success">
+                                <i class="fas fa-play-circle"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value" id="activeAssessments">0</div>
+                        <div class="stat-description">Currently in progress</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Security Incidents</span>
+                            <div class="stat-icon error">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value" id="securityIncidents">0</div>
+                        <div class="stat-description">Flagged activities</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Average Score</span>
+                            <div class="stat-icon warning">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value" id="averageScore">0%</div>
+                        <div class="stat-description">Across all submissions</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Recent Submissions</h3>
+                        <button class="btn btn-secondary btn-sm" onclick="refreshDashboard()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Candidate</th>
+                                    <th>Assessment</th>
+                                    <th>Submitted</th>
+                                    <th>Duration</th>
+                                    <th>Security</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentSubmissions">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; color: var(--text-secondary);">
+                                        Loading submissions...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submissions Section -->
+            <div id="submissions-section" class="section hidden">
+                <div class="page-header">
+                    <h2>Submissions</h2>
+                    <p>Review and analyze assessment submissions</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>All Submissions</h3>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-secondary btn-sm" onclick="exportSubmissions()">
+                                <i class="fas fa-download"></i> Export CSV
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="refreshSubmissions()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Candidate</th>
+                                    <th>Email</th>
+                                    <th>Assessment</th>
+                                    <th>Submitted</th>
+                                    <th>Duration</th>
+                                    <th>Security Events</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allSubmissions">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; color: var(--text-secondary);">
+                                        Loading submissions...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invitations Section -->
+            <div id="invitations-section" class="section hidden">
+                <div class="page-header">
+                    <h2>Assessment Invitations</h2>
+                    <p>Create and manage assessment invitations</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Create Assessment Invitation</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="invitationForm">
+                            <div class="form-group">
+                                <label class="form-label">Assessment Templates</label>
+                                <div id="templateSelector">
+                                    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                        <input type="checkbox" value="js-fundamentals-2024" onchange="updateAssessmentPreview()">
+                                        JavaScript Fundamentals (60 min)
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                        <input type="checkbox" value="python-basics-2024" onchange="updateAssessmentPreview()">
+                                        Python Basics (45 min)
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px;">
+                                        <input type="checkbox" value="senior-dev-2024" onchange="updateAssessmentPreview()">
+                                        Senior Developer Challenge (90 min)
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div id="assessmentPreview" class="assessment-preview" style="display: none;">
+                                <!-- Preview will be loaded here -->
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Candidate Emails</label>
+                                <textarea id="candidateEmails" class="form-textarea" placeholder="Enter email addresses, one per line:&#10;john.doe@company.com&#10;jane.smith@company.com" rows="4" required></textarea>
+                                <small style="color: var(--text-secondary); font-size: 12px;">Enter one email address per line</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Personal Message (Optional)</label>
+                                <textarea id="personalMessage" class="form-textarea" placeholder="Add a personal message for the candidates..." rows="3"></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Expiration Date</label>
+                                <input type="datetime-local" id="expirationDate" class="form-input" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Create & Send Invitations
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Recent Invitations</h3>
+                        <button class="btn btn-secondary btn-sm" onclick="refreshInvitations()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Assessment</th>
+                                    <th>Candidate</th>
+                                    <th>Sent</th>
+                                    <th>Expires</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invitationsList">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; color: var(--text-secondary);">
+                                        No invitations sent yet
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Templates Section -->
+            <div id="templates-section" class="section hidden">
+                <div class="page-header">
+                    <h2>Assessment Templates</h2>
+                    <p>Manage assessment templates and question banks</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Available Templates</h3>
+                        <button class="btn btn-primary btn-sm" onclick="showCreateTemplateModal()">
+                            <i class="fas fa-plus"></i> Create Template
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="templatesList">
+                            <!-- Templates will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settings-section" class="section hidden">
+                <div class="page-header">
+                    <h2>Settings</h2>
+                    <p>Configure platform settings and integrations</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>General Settings</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="settingsForm">
+                            <div class="form-group">
+                                <label class="form-label">Company Name</label>
+                                <input type="text" id="companyName" class="form-input" value="Your Company Name">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Platform Branding</label>
+                                <input type="text" id="platformBranding" class="form-input" value="TechAssess Pro">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Default Assessment Duration</label>
+                                <select id="defaultDuration" class="form-select">
+                                    <option value="30">30 minutes</option>
+                                    <option value="45">45 minutes</option>
+                                    <option value="60" selected>60 minutes</option>
+                                    <option value="90">90 minutes</option>
+                                    <option value="120">120 minutes</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Database Configuration</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="databaseForm">
+                            <div class="form-group">
+                                <label class="form-label">Supabase URL</label>
+                                <input type="url" id="supabaseUrl" class="form-input" placeholder="https://your-project.supabase.co">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Supabase Service Role Key</label>
+                                <input type="password" id="supabaseKey" class="form-input" placeholder="Enter service role key">
+                                <small style="color: var(--text-secondary); font-size: 12px;">This key is required for admin operations</small>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Database Settings
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Email Configuration</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="emailForm">
+                            <div class="form-group">
+                                <label<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechAssess Pro - Admin Dashboard</title>
+    <link rel="stylesheet"<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
