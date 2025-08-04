@@ -681,27 +681,93 @@
             <div id="invitations-section" class="section hidden">
                 <div class="page-header">
                     <h2>Assessment Invitations</h2>
-                    <p>Send assessment invitations to candidates</p>
+                    <p>Create assessments and send invitations to candidates</p>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h3>Send Invitation</h3>
+                        <h3>Create New Assessment Invitation</h3>
                     </div>
                     <div class="card-body">
                         <form id="invitationForm">
                             <div class="form-group">
-                                <label class="form-label">Candidate Email</label>
-                                <input type="email" id="candidateEmail" class="form-input" placeholder="candidate@example.com" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Assessment Type</label>
-                                <select id="assessmentType" class="form-select" required>
-                                    <option value="">Select Assessment</option>
-                                    <option value="javascript_fundamentals">JavaScript Fundamentals</option>
-                                    <option value="python_basics">Python Basics</option>
+                                <label class="form-label">Assessment Template</label>
+                                <select id="assessmentTemplate" class="form-select" required onchange="updateAssessmentPreview()">
+                                    <option value="">Select Assessment Template</option>
+                                    <option value="js-fundamentals-2024">JavaScript Fundamentals</option>
+                                    <option value="python-basics-2024">Python Basics</option>
+                                    <option value="senior-dev-2024">Senior Developer Challenge</option>
                                 </select>
                             </div>
+                            
+                            <div id="assessmentPreview" style="display: none; background: var(--bg-accent); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+                                <!-- Assessment preview will be loaded here -->
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Duration (minutes)</label>
+                                <select id="assessmentDuration" class="form-select" required>
+                                    <option value="30">30 minutes</option>
+                                    <option value="45">45 minutes</option>
+                                    <option value="60" selected>60 minutes</option>
+                                    <option value="90">90 minutes</option>
+                                    <option value="120">120 minutes</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Candidate Email(s)</label>
+                                <textarea id="candidateEmails" class="form-textarea" placeholder="Enter email addresses, one per line:&#10;john.doe@company.com&#10;jane.smith@company.com" rows="4" required></textarea>
+                                <small style="color: var(--text-secondary);">Enter one email address per line</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Personal Message (Optional)</label>
+                                <textarea id="personalMessage" class="form-textarea" placeholder="Add a personal message for the candidates..." rows="3"></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Expiration Date</label>
+                                <input type="datetime-local" id="expirationDate" class="form-input" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Create Assessment & Send Invitations
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 2rem;">
+                    <div class="card-header">
+                        <h3>Recent Invitations</h3>
+                        <button class="btn btn-secondary" onclick="refreshInvitations()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Assessment</th>
+                                    <th>Candidate</th>
+                                    <th>Sent</th>
+                                    <th>Expires</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invitationsList">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; color: var(--text-secondary);">
+                                        No invitations sent yet
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
                             <div class="form-group">
                                 <label class="form-label">Duration (minutes)</label>
                                 <select id="assessmentDuration" class="form-select">
@@ -1205,21 +1271,269 @@
         }
 
         // Invitation Management
+        function updateAssessmentPreview() {
+            const templateId = document.getElementById('assessmentTemplate').value;
+            const preview = document.getElementById('assessmentPreview');
+            
+            if (!templateId) {
+                preview.style.display = 'none';
+                return;
+            }
+            
+            // Mock assessment templates (in production, load from database)
+            const templates = {
+                'js-fundamentals-2024': {
+                    title: 'JavaScript Fundamentals Assessment',
+                    description: 'Test core JavaScript programming skills',
+                    questions: 3,
+                    difficulty: 'Mixed',
+                    defaultDuration: 60
+                },
+                'python-basics-2024': {
+                    title: 'Python Programming Assessment',
+                    description: 'Evaluate Python programming fundamentals',
+                    questions: 2,
+                    difficulty: 'Beginner to Intermediate',
+                    defaultDuration: 45
+                },
+                'senior-dev-2024': {
+                    title: 'Senior Developer Assessment',
+                    description: 'Advanced programming and system design challenges',
+                    questions: 1,
+                    difficulty: 'Advanced',
+                    defaultDuration: 90
+                }
+            };
+            
+            const template = templates[templateId];
+            if (template) {
+                preview.innerHTML = `
+                    <h4 style="margin-bottom: 0.5rem; color: var(--primary-color);">${template.title}</h4>
+                    <p style="margin-bottom: 1rem; color: var(--text-secondary);">${template.description}</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                        <div><strong>Questions:</strong> ${template.questions}</div>
+                        <div><strong>Difficulty:</strong> ${template.difficulty}</div>
+                        <div><strong>Suggested Duration:</strong> ${template.defaultDuration} min</div>
+                    </div>
+                `;
+                preview.style.display = 'block';
+                
+                // Update duration to suggested value
+                document.getElementById('assessmentDuration').value = template.defaultDuration;
+            }
+        }
+
         function sendInvitation() {
-            const email = document.getElementById('candidateEmail').value;
-            const assessmentType = document.getElementById('assessmentType').value;
+            const templateId = document.getElementById('assessmentTemplate').value;
             const duration = document.getElementById('assessmentDuration').value;
+            const emails = document.getElementById('candidateEmails').value
+                .split('\n')
+                .map(email => email.trim())
+                .filter(email => email && email.includes('@'));
             const message = document.getElementById('personalMessage').value;
+            const expiration = document.getElementById('expirationDate').value;
 
-            // Generate assessment link
-            const assessmentLink = `${window.location.origin}/index.html?assessment=${assessmentType}&duration=${duration}`;
+            if (!templateId || !duration || emails.length === 0 || !expiration) {
+                alert('Please fill in all required fields.');
+                return;
+            }
 
-            // Here you would typically send an email invitation
-            // For now, we'll show the link
-            alert(`Invitation would be sent to ${email}\n\nAssessment Link: ${assessmentLink}`);
+            // Generate unique invitation tokens and links
+            const invitations = emails.map(email => {
+                const token = generateInvitationToken();
+                const assessmentLink = `${window.location.origin}/index.html?assessment=${templateId}&token=${token}&duration=${duration}`;
+                
+                return {
+                    email,
+                    token,
+                    assessmentLink,
+                    templateId,
+                    duration,
+                    message,
+                    expiration,
+                    sentAt: new Date().toISOString(),
+                    status: 'sent'
+                };
+            });
+
+            // In production, you would:
+            // 1. Save invitations to database
+            // 2. Send actual emails with the assessment links
+            // 3. Track invitation status
+
+            // For demo, show the generated links
+            const linksHTML = invitations.map(inv => `
+                <div style="margin-bottom: 1rem; padding: 1rem; background: var(--bg-accent); border-radius: var(--radius-md);">
+                    <strong>Email:</strong> ${inv.email}<br>
+                    <strong>Assessment Link:</strong><br>
+                    <code style="font-size: 0.8rem; word-break: break-all;">${inv.assessmentLink}</code><br>
+                    <button class="btn btn-sm btn-secondary" onclick="copyToClipboard('${inv.assessmentLink}')" style="margin-top: 0.5rem;">
+                        <i class="fas fa-copy"></i> Copy Link
+                    </button>
+                </div>
+            `).join('');
+
+            // Show modal with generated links
+            showInvitationLinksModal(linksHTML, invitations.length);
+
+            // Add to recent invitations list
+            addToInvitationsList(invitations);
 
             // Reset form
             document.getElementById('invitationForm').reset();
+            document.getElementById('assessmentPreview').style.display = 'none';
+        }
+
+        function generateInvitationToken() {
+            // Generate a secure random token
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let token = '';
+            for (let i = 0; i < 32; i++) {
+                token += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return token;
+        }
+
+        function showInvitationLinksModal(linksHTML, count) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Assessment Invitations Created</h3>
+                        <button class="modal-close" onclick="this.closest('.modal').remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div style="background: var(--success-color); color: white; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; text-align: center;">
+                            <i class="fas fa-check-circle" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                            <h4>Successfully created ${count} assessment invitation${count > 1 ? 's' : ''}!</h4>
+                        </div>
+                        
+                        <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">
+                            Copy and send these assessment links to your candidates. Each link is unique and can only be used once.
+                        </p>
+                        
+                        <div style="max-height: 400px; overflow-y: auto;">
+                            ${linksHTML}
+                        </div>
+                        
+                        <div style="background: var(--warning-color); color: white; padding: 1rem; border-radius: var(--radius-md); margin-top: 1.5rem;">
+                            <strong><i class="fas fa-exclamation-triangle"></i> Important:</strong>
+                            In production, these links would be automatically sent via email. For this demo, please copy and share them manually.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-primary" onclick="this.closest('.modal').remove()">Close</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Show temporary success message
+                const button = event.target.closest('button');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                button.style.background = 'var(--success-color)';
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.background = '';
+                }, 2000);
+            }).catch(err => {
+                alert('Failed to copy to clipboard. Please copy manually.');
+            });
+        }
+
+        function addToInvitationsList(invitations) {
+            const tbody = document.getElementById('invitationsList');
+            
+            // Clear "no invitations" message if it exists
+            if (tbody.children.length === 1 && tbody.children[0].cells.length === 1) {
+                tbody.innerHTML = '';
+            }
+            
+            invitations.forEach(inv => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${inv.templateId.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</td>
+                    <td>${inv.email}</td>
+                    <td>${new Date(inv.sentAt).toLocaleString()}</td>
+                    <td>${new Date(inv.expiration).toLocaleString()}</td>
+                    <td>
+                        <span class="badge badge-${inv.status === 'sent' ? 'warning' : inv.status === 'completed' ? 'success' : 'secondary'}">
+                            ${inv.status}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="copyToClipboard('${inv.assessmentLink}')">
+                            <i class="fas fa-copy"></i> Copy Link
+                        </button>
+                        <button class="btn btn-sm btn-secondary" onclick="resendInvitation('${inv.token}')" style="margin-left: 0.25rem;">
+                            <i class="fas fa-paper-plane"></i> Resend
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function refreshInvitations() {
+            // In production, this would reload from database
+            // For demo, show some sample data
+            const sampleInvitations = [
+                {
+                    templateId: 'js-fundamentals-2024',
+                    email: 'john.doe@example.com',
+                    sentAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+                    expiration: new Date(Date.now() + 604800000).toISOString(), // 7 days from now
+                    status: 'completed',
+                    assessmentLink: `${window.location.origin}/index.html?assessment=js-fundamentals-2024&token=abc123&duration=60`
+                },
+                {
+                    templateId: 'python-basics-2024',
+                    email: 'jane.smith@example.com',
+                    sentAt: new Date(Date.now() - 43200000).toISOString(), // 12 hours ago
+                    expiration: new Date(Date.now() + 518400000).toISOString(), // 6 days from now
+                    status: 'sent',
+                    assessmentLink: `${window.location.origin}/index.html?assessment=python-basics-2024&token=def456&duration=45`
+                }
+            ];
+
+            const tbody = document.getElementById('invitationsList');
+            tbody.innerHTML = sampleInvitations.map(inv => `
+                <tr>
+                    <td>${inv.templateId.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</td>
+                    <td>${inv.email}</td>
+                    <td>${new Date(inv.sentAt).toLocaleString()}</td>
+                    <td>${new Date(inv.expiration).toLocaleString()}</td>
+                    <td>
+                        <span class="badge badge-${inv.status === 'sent' ? 'warning' : inv.status === 'completed' ? 'success' : 'secondary'}">
+                            ${inv.status}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="copyToClipboard('${inv.assessmentLink}')">
+                            <i class="fas fa-copy"></i> Copy Link
+                        </button>
+                        ${inv.status === 'sent' ? `
+                            <button class="btn btn-sm btn-secondary" onclick="resendInvitation('${inv.token}')" style="margin-left: 0.25rem;">
+                                <i class="fas fa-paper-plane"></i> Resend
+                            </button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function resendInvitation(token) {
+            // In production, this would resend the email
+            alert('Invitation resent successfully! (This would actually send an email in production)');
         }
 
         // Settings Management
