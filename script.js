@@ -1,6 +1,6 @@
 // === PRODUCTION CONFIGURATION ===
 const supabaseUrl = "https://ytoidmelmialrjfqyhet.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0b2lkbWVsbWlhbHJqZnF5aGV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODcwNjI1NDIsImV4cCI6MjAwMjYzODU0Mn0.DEMO_KEY_REPLACE_WITH_REAL"; // Replace with your actual anon key
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0b2lkbWVsbWlhbHJqZnF5aGV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzMTg3NzYsImV4cCI6MjA2OTg5NDc3Nn0.4D_ohY9wqeBb8Rod8dlhrn5Jjl10QNzU-AeCDHUixv4"; // Replace with your actual anon key
 
 // === INITIALIZE SUPABASE ===
 const { createClient } = supabase;
