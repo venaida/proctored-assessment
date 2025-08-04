@@ -1,133 +1,4 @@
-async function setupWebcam() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
-                        frameRate: { ideal: 30 }
-                    }, 
-                    audio: true 
-                });
-                
-                // Show webcam preview to user
-                const video = document.getElementById('webcamVideo');
-                if (video) {
-                    video.srcObject = stream;
-                    document.getElementById('webcamPreview').classList.remove('hidden');
-                }
-                
-                state.videoChunks = [];
-                state.mediaRecorder = new MediaRecorder(stream, {
-                    mimeType: 'video/webm;codecs=vp8,opus'
-                });
-                
-                state.mediaRecorder.ondataavailable = (event) => {
-                    if (event.data.size > 0) {
-                        state.videoChunks.push(event.data);
-                    }
-                };
-                
-                state.mediaRecorder.onstop = async () => {
-                    const blob = new Blob(state.videoChunks, { type: 'video/webm' });
-                    
-                    if (state.supabaseClient) {
-                        const fileName = `recording-${Date.now()}-${state.currentUser.name.replace(/\s+/g, '-').toLowerCase()}.webm`;
-                        
-                        try {
-                            const { data, error } = await state.supabaseClient.storage
-                                .from('recordings')
-                                .upload(fileName, blob, {
-                                    contentType: 'video/webm'
-                                });
-                            
-                            if (!error) {
-                                console.log('✅ Video uploaded successfully:', fileName);
-                            } else {
-                                console.error('❌ Video upload failed:', error);
-                            }
-                        } catch (err) {
-                            console.error('❌ Video upload error:', err);
-                        }
-                    }
-                };
-                
-                state.mediaRecorder.start(1000);
-                
-            } catch (error) {
-                console.error('Webcam setup failed:', error);
-                showCustomToast('Camera Error', 'Could not access camera. Assessment will continue without recording.', 'warning');
-                // Don't throw error - allow assessment to continue
-            }
-        }
-
-        function setupCheatingDetection() {
-            const logCheatingEvent = (event, details = {}) => {
-                const log = {
-                    event,
-                    timestamp: new Date().toISOString(),
-                    details
-                };
-                state.cheatingLogs.push(log);
-                
-                if (state.currentScreen === 'assessment') {
-                    showCheatingWarning(event);
-                }
-            };
-            
-            // Tab/Window focus detection
-            window.addEventListener('blur', () => {
-                logCheatingEvent('window_blur');
-            });
-            
-            document.addEventListener('visibilitychange', () => {
-                if (document.hidden) {
-                    logCheatingEvent('tab_hidden');
-                }
-            });
-            
-            // Mouse leave detection (more comprehensive)
-            let mouseLeaveTimeout;
-            document.addEventListener('mouseleave', (e) => {
-                // Only log if mouse actually leaves the document bounds
-                if (e.clientY < 0 || e.clientX < 0 || 
-                    e.clientX > window.innerWidth || e.clientY > window.innerHeight) {
-                    clearTimeout(mouseLeaveTimeout);
-                    mouseLeaveTimeout = setTimeout(() => {
-                        logCheatingEvent('mouse_left_screen');
-                    }, 500); // Small delay to avoid false positives
-                }
-            });
-            
-            document.addEventListener('mouseenter', () => {
-                clearTimeout(mouseLeaveTimeout);
-            });
-            
-            // Keyboard shortcuts detection
-            document.addEventListener('keydown', (e) => {
-                const suspiciousKeys = ['F12', 'F5'];
-                const suspiciousCombos = [
-                    { ctrl: true, shift: true, key: 'I' },
-                    { ctrl: true, shift: true, key: 'J' },
-                    { ctrl: true, key: 'U' },
-                    { ctrl: true, key: 'R' }
-                ];
-                
-                if (suspiciousKeys.includes(e.key)) {
-                    e.preventDefault();
-                    logCheatingEvent('suspicious_key', { key: e.key });
-                }
-                
-                for (const combo of suspiciousCombos) {
-                    if (e.ctrlKey === combo.ctrl && e.shiftKey === combo.shift && e.key === combo.key) {
-                        e.preventDefault();
-                        logCheatingEvent('suspicious_key_combo', combo);
-                        break;
-                    }
-                }
-            });
-            
-            // Right-click detection
-            document.addEventListener('contextmenu', (e)<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -289,29 +160,20 @@ async function setupWebcam() {
             justify-content: center;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes scaleIn {
-            from { transform: scale(0.9); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        /* Webcam Preview */
+        /* FIXED: Webcam Preview - Better Positioning */
         .webcam-preview {
             position: fixed;
             bottom: 20px;
-            right: 20px;
+            left: 20px; /* Moved to left side to avoid submit button */
             width: 200px;
             height: 150px;
             border: 3px solid var(--primary);
             border-radius: var(--radius);
             overflow: hidden;
             background: black;
-            z-index: 1000;
+            z-index: 999; /* Lower z-index than toasts */
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: opacity 0.3s ease;
         }
 
         .webcam-preview video {
@@ -333,24 +195,29 @@ async function setupWebcam() {
             font-weight: 600;
         }
 
-        /* Custom Scrollbar */
-        .CodeMirror-scroll::-webkit-scrollbar {
-            width: 8px;
+        /* Hide webcam on mobile to avoid UI conflicts */
+        @media (max-width: 768px) {
+            .webcam-preview {
+                width: 120px;
+                height: 90px;
+                bottom: 10px;
+                left: 10px;
+            }
         }
 
-        .CodeMirror-scroll::-webkit-scrollbar-track {
-            background: var(--secondary);
-            border-radius: 4px;
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
-        .CodeMirror-scroll::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 4px;
-            transition: background 0.2s;
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
 
-        .CodeMirror-scroll::-webkit-scrollbar-thumb:hover {
-            background: var(--text-secondary);
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
 
         /* Assessment Container - No Scroll */
@@ -360,11 +227,6 @@ async function setupWebcam() {
             display: flex;
             flex-direction: column;
             overflow: hidden;
-        }
-
-        @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
         }
 
         /* Main Layout */
@@ -828,9 +690,6 @@ async function setupWebcam() {
     <!-- Custom Toast Container -->
     <div id="customToastContainer" class="custom-toast-container"></div>
 
-    <!-- Legacy Toast Container (for compatibility) -->
-    <div id="toastContainer" class="toast-container" style="display: none;"></div>
-
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
@@ -858,6 +717,7 @@ async function setupWebcam() {
             cheatingLogs: [],
             mediaRecorder: null,
             videoChunks: [],
+            webcamStream: null, // ADDED: Track the stream for cleanup
             editors: {},
             timer: null,
             timeLeft: 0,
@@ -942,6 +802,100 @@ async function setupWebcam() {
             showCustomToast(title, message, type, duration);
         }
 
+        // FIXED: Webcam Management with Proper Cleanup
+        async function setupWebcam() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        frameRate: { ideal: 30 }
+                    }, 
+                    audio: true 
+                });
+                
+                // Store stream for cleanup
+                state.webcamStream = stream;
+                
+                // Show webcam preview to user
+                const video = document.getElementById('webcamVideo');
+                if (video) {
+                    video.srcObject = stream;
+                    document.getElementById('webcamPreview').classList.remove('hidden');
+                }
+                
+                state.videoChunks = [];
+                state.mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'video/webm;codecs=vp8,opus'
+                });
+                
+                state.mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        state.videoChunks.push(event.data);
+                    }
+                };
+                
+                state.mediaRecorder.onstop = async () => {
+                    const blob = new Blob(state.videoChunks, { type: 'video/webm' });
+                    
+                    if (state.supabaseClient) {
+                        const fileName = `recording-${Date.now()}-${state.currentUser.name.replace(/\s+/g, '-').toLowerCase()}.webm`;
+                        
+                        try {
+                            const { data, error } = await state.supabaseClient.storage
+                                .from('recordings')
+                                .upload(fileName, blob, {
+                                    contentType: 'video/webm'
+                                });
+                            
+                            if (!error) {
+                                console.log('✅ Video uploaded successfully:', fileName);
+                            } else {
+                                console.error('❌ Video upload failed:', error);
+                            }
+                        } catch (err) {
+                            console.error('❌ Video upload error:', err);
+                        }
+                    }
+                };
+                
+                state.mediaRecorder.start(1000);
+                
+            } catch (error) {
+                console.error('Webcam setup failed:', error);
+                showCustomToast('Camera Error', 'Could not access camera. Assessment will continue without recording.', 'warning');
+                // Don't throw error - allow assessment to continue
+            }
+        }
+
+        // FIXED: Stop Webcam Function
+        function stopWebcam() {
+            try {
+                // Stop recording
+                if (state.mediaRecorder && state.mediaRecorder.state === 'recording') {
+                    state.mediaRecorder.stop();
+                }
+                
+                // Stop all tracks in the stream
+                if (state.webcamStream) {
+                    state.webcamStream.getTracks().forEach(track => {
+                        track.stop();
+                    });
+                    state.webcamStream = null;
+                }
+                
+                // Hide webcam preview
+                const webcamPreview = document.getElementById('webcamPreview');
+                if (webcamPreview) {
+                    webcamPreview.classList.add('hidden');
+                }
+                
+                console.log('✅ Webcam stopped successfully');
+            } catch (error) {
+                console.error('❌ Error stopping webcam:', error);
+            }
+        }
+
         // Screen Management
         function showScreen(screenName) {
             state.currentScreen = screenName;
@@ -959,6 +913,8 @@ async function setupWebcam() {
                     initializeAssessment();
                     break;
                 case 'success':
+                    // FIXED: Stop webcam when showing success screen
+                    stopWebcam();
                     app.innerHTML = renderSuccessScreen();
                     break;
             }
@@ -1224,7 +1180,7 @@ async function setupWebcam() {
                         </div>
                     </div>
 
-                    <!-- Webcam Preview -->
+                    <!-- FIXED: Webcam Preview - Moved to left side, lower z-index -->
                     <div id="webcamPreview" class="webcam-preview hidden">
                         <video id="webcamVideo" autoplay muted playsinline></video>
                     </div>
@@ -1250,6 +1206,7 @@ async function setupWebcam() {
                                     <p><strong>Candidate:</strong> ${state.currentUser?.name}</p>
                                     <p><strong>Questions Completed:</strong> ${state.answers.filter(a => a && a.trim()).length} of ${state.questions.length}</p>
                                     <p><strong>Submitted At:</strong> ${new Date().toLocaleString()}</p>
+                                    <p><strong>Recording:</strong> Stopped and uploaded</p>
                                 </div>
                             </div>
                             <p style="color: var(--text-secondary); font-size: 14px; margin-top: 24px;">
@@ -1287,7 +1244,6 @@ async function setupWebcam() {
 
         async function startAssessment() {
             try {
-                showLoading(true);
                 showCustomToast('Initializing', 'Setting up your assessment environment...', 'info', 3000);
                 
                 const assessmentInfo = getAssessmentFromURL();
@@ -1350,8 +1306,6 @@ async function setupWebcam() {
             } catch (error) {
                 console.error('Failed to start assessment:', error);
                 showCustomToast('Setup Failed', 'Failed to start assessment. Please check your webcam permissions and try again.', 'error');
-            } finally {
-                showLoading(false);
             }
         }
 
@@ -1395,18 +1349,6 @@ async function setupWebcam() {
             showToast('Question Changed', `Switched to question ${questionIndex + 1}`, 'info', 2000);
         }
 
-        function resetCode() {
-            if (confirm('Are you sure you want to reset your code for this question?')) {
-                const editor = state.editors[state.currentQuestion];
-                if (editor) {
-                    editor.setValue(state.questions[state.currentQuestion].starter || '');
-                    state.answers[state.currentQuestion] = '';
-                    updateQuestionNavigation();
-                    showToast('Code Reset', 'Your code has been reset to the starter template.', 'warning', 3000);
-                }
-            }
-        }
-
         function updateQuestionNavigation() {
             const navItems = document.querySelectorAll('.question-nav-item');
             navItems.forEach((item, index) => {
@@ -1420,6 +1362,22 @@ async function setupWebcam() {
             });
         }
 
+        // FIXED: Show Confirmation Before Submit
+        async function showConfirmSubmission() {
+            const answeredCount = state.answers.filter(a => a && a.trim()).length;
+            const totalQuestions = state.questions.length;
+            
+            const confirmed = await showCustomConfirm(
+                'Submit Assessment?',
+                `You have answered ${answeredCount} out of ${totalQuestions} questions. Are you sure you want to submit your assessment?`,
+                'warning'
+            );
+            
+            if (confirmed) {
+                await submitAssessment();
+            }
+        }
+
         async function submitAssessment() {
             try {
                 showCustomToast('Submitting', 'Processing your submission...', 'info');
@@ -1428,9 +1386,8 @@ async function setupWebcam() {
                     state.answers[state.currentQuestion] = state.editors[state.currentQuestion].getValue();
                 }
                 
-                if (state.mediaRecorder && state.mediaRecorder.state === 'recording') {
-                    state.mediaRecorder.stop();
-                }
+                // FIXED: Stop webcam and recording before submission
+                stopWebcam();
                 
                 if (state.timer) {
                     clearInterval(state.timer);
@@ -1542,60 +1499,6 @@ async function setupWebcam() {
             return totalAllocated - state.timeLeft;
         }
 
-        async function setupWebcam() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
-                        frameRate: { ideal: 30 }
-                    }, 
-                    audio: true 
-                });
-                
-                state.videoChunks = [];
-                state.mediaRecorder = new MediaRecorder(stream, {
-                    mimeType: 'video/webm;codecs=vp8,opus'
-                });
-                
-                state.mediaRecorder.ondataavailable = (event) => {
-                    if (event.data.size > 0) {
-                        state.videoChunks.push(event.data);
-                    }
-                };
-                
-                state.mediaRecorder.onstop = async () => {
-                    const blob = new Blob(state.videoChunks, { type: 'video/webm' });
-                    
-                    if (state.supabaseClient) {
-                        const fileName = `recording-${Date.now()}-${state.currentUser.name.replace(/\s+/g, '-').toLowerCase()}.webm`;
-                        
-                        try {
-                            const { data, error } = await state.supabaseClient.storage
-                                .from('recordings')
-                                .upload(fileName, blob, {
-                                    contentType: 'video/webm'
-                                });
-                            
-                            if (!error) {
-                                console.log('✅ Video uploaded successfully:', fileName);
-                            } else {
-                                console.error('❌ Video upload failed:', error);
-                            }
-                        } catch (err) {
-                            console.error('❌ Video upload error:', err);
-                        }
-                    }
-                };
-                
-                state.mediaRecorder.start(1000);
-                
-            } catch (error) {
-                console.error('Webcam setup failed:', error);
-                throw error;
-            }
-        }
-
         function setupCheatingDetection() {
             const logCheatingEvent = (event, details = {}) => {
                 const log = {
@@ -1666,12 +1569,33 @@ async function setupWebcam() {
             showScreen('welcome');
         });
 
-        // Prevent common cheating attempts
+        // FIXED: Prevent page exit during assessment with webcam cleanup
         window.addEventListener('beforeunload', (e) => {
             if (state.currentScreen === 'assessment') {
+                // Clean up webcam resources
+                stopWebcam();
+                
                 e.preventDefault();
                 e.returnValue = 'Are you sure you want to leave? Your progress may be lost.';
                 return e.returnValue;
+            }
+        });
+
+        // FIXED: Page visibility change - stop webcam when page is hidden for extended time
+        let hiddenTimer = null;
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && state.currentScreen === 'assessment') {
+                // Start timer to stop webcam if hidden for too long (30 seconds)
+                hiddenTimer = setTimeout(() => {
+                    if (document.hidden) {
+                        stopWebcam();
+                        showCustomToast('Session Paused', 'Webcam stopped due to extended inactivity. Reload to resume.', 'warning');
+                    }
+                }, 30000);
+            } else if (!document.hidden && hiddenTimer) {
+                // Clear timer if page becomes visible again
+                clearTimeout(hiddenTimer);
+                hiddenTimer = null;
             }
         });
     </script>
