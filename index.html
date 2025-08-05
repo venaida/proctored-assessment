@@ -109,6 +109,9 @@
 <body>
     <div id="app"></div>
     <div id="customToastContainer" class="custom-toast-container"></div>
+    <div id="modalContainer"></div>
+    <div id="webcamPreview" class="webcam-preview hidden"><video id="webcamVideo" autoplay muted></video></div>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
@@ -123,65 +126,254 @@
             brandName: "TechAssess Pro",
             brandLogo: "TA"
         };
-        const state = { currentScreen: 'loading', currentUser: null, currentQuestion: 0, questions: [], answers: [], cheatingLogs: [], mediaRecorder: null, videoChunks: [], webcamStream: null, editors: {}, timer: null, timeLeft: 0, assessmentData: null, isModalOpen: false, invitationToken: null };
+        const state = { currentScreen: 'loading', currentUser: null, currentQuestion: 0, answers: [], cheatingLogs: [], mediaRecorder: null, videoChunks: [], webcamStream: null, editors: {}, timer: null, timeLeft: 0, assessmentData: null, isModalOpen: false, invitationToken: null };
         const supabaseClient = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
 
-        // --- UI COMPONENTS (TOASTS & MODALS) ---
-        function showCustomToast(title, message, type = 'success', duration = 5000) { /* ... implementation ... */ }
-        function showCustomConfirm(title, message, type = 'warning') { /* ... implementation ... */ }
+        // --- UI COMPONENTS ---
+        function showCustomToast(title, message, type = 'info', duration = 5000) {
+            const container = document.getElementById('customToastContainer');
+            const toast = document.createElement('div');
+            toast.className = `custom-toast ${type}`;
+            toast.innerHTML = `<div class="custom-toast-content"><div class="custom-toast-title">${title}</div><p class="custom-toast-message">${message}</p></div><button class="custom-toast-close" onclick="this.parentElement.remove()">&times;</button>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), duration);
+        }
+
+        function showCustomConfirm(title, message, onConfirm, type = 'warning') {
+            if(state.isModalOpen) return;
+            state.isModalOpen = true;
+            const container = document.getElementById('modalContainer');
+            const modal = document.createElement('div');
+            modal.className = 'confirmation-modal';
+            modal.innerHTML = `
+                <div class="confirmation-content">
+                    <div class="confirmation-icon ${type}"><i class="fas fa-exclamation-triangle"></i></div>
+                    <h2 class="confirmation-title">${title}</h2>
+                    <p class="confirmation-message">${message}</p>
+                    <div class="confirmation-buttons">
+                        <button id="confirmCancel" class="btn btn-secondary">Cancel</button>
+                        <button id="confirmAction" class="btn btn-primary">Confirm</button>
+                    </div>
+                </div>`;
+            container.appendChild(modal);
+            document.getElementById('confirmAction').onclick = () => { onConfirm(); modal.remove(); state.isModalOpen = false; };
+            document.getElementById('confirmCancel').onclick = () => { modal.remove(); state.isModalOpen = false; };
+        }
 
         // --- WEBCAM & PROCTORING ---
-        async function setupWebcam() { /* ... implementation ... */ }
-        function stopWebcam() { /* ... implementation ... */ }
-        function setupCheatingDetection() { /* ... implementation ... */ }
-        function showCheatingWarning(eventType) { /* ... implementation ... */ }
+        async function setupWebcam() {
+            try {
+                state.webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                const videoEl = document.getElementById('webcamVideo');
+                videoEl.srcObject = state.webcamStream;
+                document.getElementById('webcamPreview').classList.remove('hidden');
 
-        // --- SCREEN RENDERING & MANAGEMENT ---
+                state.mediaRecorder = new MediaRecorder(state.webcamStream, { mimeType: 'video/webm' });
+                state.mediaRecorder.ondataavailable = e => e.data.size > 0 && state.videoChunks.push(e.data);
+                state.mediaRecorder.start(1000);
+            } catch(err) {
+                console.error("Webcam error:", err);
+                showScreen('error', { title: 'Webcam Required', message: 'This assessment requires camera and microphone access. Please enable permissions and refresh.'});
+                throw err;
+            }
+        }
+
+        function stopWebcam() {
+            if(state.webcamStream) {
+                state.webcamStream.getTracks().forEach(track => track.stop());
+            }
+            if(state.mediaRecorder && state.mediaRecorder.state === 'recording') {
+                state.mediaRecorder.stop();
+            }
+            document.getElementById('webcamPreview').classList.add('hidden');
+        }
+        
+        function setupCheatingDetection() {
+            const log = (event, details={}) => {
+                state.cheatingLogs.push({ event, timestamp: new Date().toISOString(), details });
+                showCheatingWarning(event);
+            };
+            window.addEventListener('blur', () => log('window_blur'));
+            document.addEventListener('visibilitychange', () => document.hidden && log('tab_hidden'));
+            window.addEventListener('contextmenu', e => { e.preventDefault(); log('context_menu'); });
+            document.addEventListener('keydown', e => {
+                 if (e.key === 'F12' || (e.ctrlKey && e.shiftKey)) { e.preventDefault(); log('devtools_key'); }
+            });
+        }
+        
+        function showCheatingWarning(eventType) {
+            let message = "Suspicious activity detected. Please focus on the assessment.";
+            if(eventType === 'tab_hidden') message = 'Tab switched. Please remain in the assessment window.';
+            if(eventType === 'window_blur') message = 'Window lost focus. Please stay on this page.';
+            showCustomToast('Security Alert', message, 'warning');
+        }
+
+        // --- SCREEN RENDERING ---
         function showScreen(screenName, data = {}) {
             state.currentScreen = screenName;
             const app = document.getElementById('app');
-            app.innerHTML = ''; // Clear previous screen before rendering
+            app.innerHTML = '';
             
             switch (screenName) {
                 case 'loading': app.innerHTML = renderLoadingScreen(); break;
                 case 'error': app.innerHTML = renderErrorScreen(data.title, data.message); break;
                 case 'welcome': app.innerHTML = renderWelcomeScreen(); break;
                 case 'instructions': app.innerHTML = renderInstructionsScreen(); break;
-                case 'assessment': app.innerHTML = renderAssessmentScreen(); break; // Defer init
-                case 'success': app.innerHTML = renderSuccessScreen(); break;
-            }
-
-            if (screenName === 'assessment') {
-                // Defer initialization to ensure DOM is ready
-                setTimeout(initializeAssessment, 0);
-            }
-            if (screenName === 'success') {
-                stopWebcam();
+                case 'assessment': app.innerHTML = renderAssessmentScreen(); setTimeout(initializeAssessment, 0); break;
+                case 'success': app.innerHTML = renderSuccessScreen(); stopWebcam(); break;
             }
         }
-        
-        // --- RENDER FUNCTIONS (WITH DEFENSIVE CODING) ---
+
+        // --- RENDER FUNCTIONS ---
         function renderLoadingScreen() { return `<div class="container"><div class="card"><div class="card-body" style="text-align:center;">Loading Assessment...</div></div></div>`; }
         function renderErrorScreen(title, message) { return `<div class="container"><div class="card"><div class="card-body" style="text-align: center;"><div class="confirmation-icon error" style="margin-top:0;"><i class="fas fa-times-circle"></i></div><h1 style="font-size: 24px;">${title}</h1><p style="color: var(--text-secondary);">${message}</p></div></div></div>`; }
         
-        // FIXED: Added defensive checks with nullish coalescing operator (??)
         function renderWelcomeScreen() {
             const data = state.assessmentData;
             return `<div class="container"><div class="card"><div class="card-header"><div class="brand-header"><div class="brand-logo">${CONFIG.brandLogo}</div></div><h1>${data?.title ?? 'Assessment'}</h1><p>${data?.description ?? 'Please enter your details to begin.'}</p></div><div class="card-body"><div class="info-box"><h3><i class="fas fa-info-circle"></i> Details</h3><p><strong>Duration:</strong> ${data?.duration ?? 'N/A'} mins | <strong>Questions:</strong> ${data?.questions?.length ?? 0} | <strong>Language:</strong> ${data?.language ?? 'N/A'}</p></div><div class="form-group"><label class="form-label">Full Name</label><input type="text" id="candidateName" class="form-input" placeholder="Enter your full name" required></div><div class="form-group"><label class="form-label">Email Address</label><input type="email" id="candidateEmail" class="form-input" placeholder="Enter your email address" required></div><div class="btn-group"><button class="btn btn-primary" onclick="proceedToInstructions()"><i class="fas fa-arrow-right"></i> Continue</button></div></div></div></div>`;
         }
-        function renderInstructionsScreen() { /* ... full implementation ... */ }
-        function renderAssessmentScreen() { /* ... full implementation ... */ }
-        function renderSuccessScreen() { /* ... full implementation ... */ }
 
+        function renderInstructionsScreen() {
+             return `<div class="container"><div class="card"><div class="card-header"><h1>Instructions</h1><p>Read carefully before you begin.</p></div><div class="card-body"><div class="instructions-grid"><div class="instruction-item"><h3><i class="fas fa-video"></i> Webcam Proctoring</h3><p>Your webcam and microphone will be recorded throughout the assessment.</p></div><div class="instruction-item"><h3><i class="fas fa-clock"></i> Time Limit</h3><p>You have a fixed time to complete the assessment. The timer cannot be paused.</p></div><div class="instruction-item"><h3><i class="fas fa-desktop"></i> Focus Required</h3><p>Do not switch tabs or navigate away from the assessment window.</p></div></div><div class="warning-box"><h3><i class="fas fa-exclamation-triangle"></i> Important</h3><p>Clicking "Start Assessment" will immediately begin the timer and recording.</p></div><div class="btn-group"><button class="btn btn-success" onclick="startAssessment()"><i class="fas fa-play-circle"></i> Start Assessment</button></div></div></div></div>`;
+        }
+        
+        function renderAssessmentScreen() {
+            const q = state.assessmentData.questions[state.currentQuestion];
+            return `
+            <div class="assessment-container">
+                <header class="assessment-header">
+                    <div class="assessment-info"><h2>${state.assessmentData.title}</h2><p>${state.currentUser.name}</p></div>
+                    <div class="assessment-controls">
+                        <div id="timer" class="timer">00:00</div>
+                        <div class="recording-indicator"><div class="recording-dot"></div>Recording</div>
+                    </div>
+                </header>
+                <div class="assessment-content">
+                    <div class="questions-panel">
+                        <h3>Questions</h3>
+                        <div id="questionNav" class="question-nav"></div>
+                        <div class="current-question">
+                            <h3>${q.title}</h3><p>${q.description}</p>
+                        </div>
+                    </div>
+                    <div class="editor-panel">
+                        <div class="editor-header"><div class="editor-tab">Solution</div><button class="btn btn-secondary btn-sm" onclick="showConfirmSubmission()">Submit</button></div>
+                        <div id="codeEditor"></div>
+                        <div class="status-bar"><span>Language: ${q.language}</span><span>Auto-saved</span></div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function renderSuccessScreen() {
+            return `<div class="container"><div class="card"><div class="card-body success-screen"><div class="success-icon"><i class="fas fa-check"></i></div><h1>Assessment Submitted!</h1><p>Your responses have been successfully submitted. You may now close this window.</p></div></div></div>`;
+        }
+        
         // --- ASSESSMENT LOGIC ---
-        async function initializeAssessment() { /* ... full implementation ... */ }
-        function switchQuestion(index) { /* ... full implementation ... */ }
-        function updateQuestionNavigation() { /* ... full implementation ... */ }
-        function startTimer(seconds) { /* ... full implementation ... */ }
-        async function showConfirmSubmission() { /* ... full implementation ... */ }
-        async function submitAssessment() { /* ... full implementation ... */ }
-        function proceedToInstructions() { /* ... full implementation ... */ }
-        function startAssessment() { /* ... full implementation ... */ }
+        async function initializeAssessment() {
+            updateQuestionNavigation();
+            const q = state.assessmentData.questions[state.currentQuestion];
+            state.editors[state.currentQuestion] = CodeMirror(document.getElementById('codeEditor'), {
+                value: state.answers[state.currentQuestion] || q.starter || '',
+                mode: q.language,
+                theme: 'github',
+                lineNumbers: true,
+                autoCloseBrackets: true,
+                matchBrackets: true
+            });
+            state.editors[state.currentQuestion].on('change', cm => {
+                state.answers[state.currentQuestion] = cm.getValue();
+                updateQuestionNavigation();
+            });
+            startTimer(state.assessmentData.duration * 60);
+        }
+        
+        function switchQuestion(index) {
+            if(index === state.currentQuestion || !state.editors[state.currentQuestion]) return;
+            state.currentQuestion = index;
+            renderAssessmentScreen();
+        }
+
+        function updateQuestionNavigation() {
+            const nav = document.getElementById('questionNav');
+            if(!nav) return;
+            nav.innerHTML = state.assessmentData.questions.map((_, i) => 
+                `<div class="question-nav-item ${i === state.currentQuestion ? 'active' : ''} ${state.answers[i] ? 'answered' : ''}" onclick="switchQuestion(${i})">${i + 1}</div>`
+            ).join('');
+        }
+        
+        function startTimer(seconds) {
+            state.timeLeft = seconds;
+            state.timer = setInterval(() => {
+                state.timeLeft--;
+                const mins = String(Math.floor(state.timeLeft / 60)).padStart(2, '0');
+                const secs = String(state.timeLeft % 60).padStart(2, '0');
+                const timerEl = document.getElementById('timer');
+                if(timerEl) timerEl.textContent = `${mins}:${secs}`;
+
+                if(state.timeLeft <= 0) {
+                    clearInterval(state.timer);
+                    submitAssessment();
+                } else if(state.timeLeft < 300) {
+                    timerEl.className = 'timer danger';
+                } else if(state.timeLeft < 600) {
+                    timerEl.className = 'timer warning';
+                }
+            }, 1000);
+        }
+
+        function showConfirmSubmission() {
+            showCustomConfirm('Submit Assessment?', 'Are you sure you want to finalize and submit your answers?', submitAssessment);
+        }
+        
+        async function submitAssessment() {
+            clearInterval(state.timer);
+            stopWebcam();
+            showScreen('loading');
+
+            const blob = new Blob(state.videoChunks, { type: 'video/webm' });
+            const videoFileName = `recording-${state.invitationToken || Date.now()}.webm`;
+            await supabaseClient.storage.from('recordings').upload(videoFileName, blob);
+            
+            const { error } = await supabaseClient.from('submissions').insert({
+                invitation_id: state.assessmentData.invitation_id,
+                candidate_name: state.currentUser.name,
+                candidate_email: state.currentUser.email,
+                answers: state.answers,
+                cheating_logs: state.cheatingLogs,
+                video_url: videoFileName,
+                assessment_template_id: state.assessmentData.id
+            });
+
+            if(state.invitationToken) {
+                await supabaseClient.from('invitations').update({ status: 'completed' }).eq('invitation_token', state.invitationToken);
+            }
+
+            if(error) {
+                showScreen('error', { title: 'Submission Failed', message: 'There was an error submitting your assessment.' });
+            } else {
+                showScreen('success');
+            }
+        }
+        
+        function proceedToInstructions() {
+            const name = document.getElementById('candidateName').value;
+            const email = document.getElementById('candidateEmail').value;
+            if(!name || !email) return showCustomToast('Error', 'Please fill in your name and email.', 'error');
+            state.currentUser = { name, email };
+            showScreen('instructions');
+        }
+
+        async function startAssessment() {
+            try {
+                await setupWebcam();
+                setupCheatingDetection();
+                state.answers = Array(state.assessmentData.questions.length).fill('');
+                showScreen('assessment');
+            } catch (err) {
+                 // Error is handled in setupWebcam
+            }
+        }
 
         // --- INITIALIZATION & ROUTING ---
         async function validateAndLoadAssessment() {
@@ -205,6 +397,7 @@
                 state.assessmentData = {
                     ...invitation.assessment_templates,
                     duration: invitation.duration || invitation.assessment_templates.default_duration,
+                    invitation_id: invitation.id
                 };
                 showScreen('welcome');
             } catch (err) {
@@ -214,7 +407,7 @@
         }
 
         function getDefaultAssessment() {
-            return { id: 'js-demo', title: 'JavaScript Demo', description: 'A sample assessment.', duration: 15, language: 'JavaScript', questions: [{ id: 1, title: "Sum Array", description: "Sum all numbers in an array.", language: "javascript", starter: "function sum(arr) {\n  // code\n}" }] };
+            return { id: 'js-demo', title: 'JavaScript Demo', description: 'A sample assessment for demonstration.', duration: 15, language: 'javascript', questions: [{ id: 1, title: "Sum Array", description: "Write a function that sums all numbers in an array.", language: "javascript", starter: "function sum(arr) {\n  // your code here\n}" }] };
         }
 
         document.addEventListener('DOMContentLoaded', validateAndLoadAssessment);
