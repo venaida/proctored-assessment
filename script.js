@@ -1,18 +1,17 @@
 // === PRODUCTION CONFIGURATION ===
 const supabaseUrl = "https://ytoidmelmialrjfqyhet.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0b2lkbWVsbWlhbHJqZnF5aGV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzMTg3NzYsImV4cCI6MjA2OTg5NDc3Nn0.4D_ohY9wqeBb8Rod8dlhrn5Jjl10QNzU-AeCDHUixv4"; // Replace with your actual anon key
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0b2lkbWVsbWlhbHJqZnF5aGV0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDMxODc3NiwiZXhwIjoyMDY5ODk0Nzc2fQ.O0gQlVZVRK_iebIyYShkRp7RuTVTx-GmM-IXeNF92Js"; 
 
 // === INITIALIZE SUPABASE ===
 const { createClient } = supabase;
 const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
 // === GLOBAL STATE ===
-let currentUser = { name: "", questions: [], answers: [], cheating: [] };
+let currentUser = { name: "", email: "", questions: [], answers: [], cheating: [], videoFileName: null };
 let mediaRecorder, videoChunks = [];
 let currentQuestionIndex = 0;
 let assessmentTimer = null;
 let timeRemaining = 0;
-let editors = {};
 
 // === UI FUNCTIONS ===
 function showIntro() {
@@ -83,57 +82,45 @@ function showIntro() {
 
 async function startAssessment() {
   try {
-    // Validate inputs
     const name = document.getElementById("nameInput").value.trim();
     const email = document.getElementById("emailInput").value.trim();
     const questionLines = document.getElementById("questionsInput").value.trim().split("\n").filter(q => q.trim());
     const duration = parseInt(document.getElementById("durationInput").value) || 30;
 
     if (!name || !email || questionLines.length === 0) {
-      showNotification("Please fill in all required fields.", "error");
-      return;
+      return showNotification("Please fill in all required fields.", "error");
     }
 
-    if (!isValidEmail(email)) {
-      showNotification("Please enter a valid email address.", "error");
-      return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return showNotification("Please enter a valid email address.", "error");
     }
 
-    // Set up user data
     currentUser.name = name;
     currentUser.email = email;
     currentUser.questions = questionLines;
     currentUser.answers = Array(questionLines.length).fill("");
     currentUser.cheating = [];
     
-    // Request camera permissions and setup recording
     await setupRecorder();
-    
-    // Setup cheating detection
     setupCheatingDetection();
     
-    // Start timer
-    timeRemaining = duration * 60; // Convert to seconds
+    timeRemaining = duration * 60;
     startTimer();
     
-    // Render assessment interface
     renderAssessment();
-    
-    showNotification(`Assessment started! You have ${duration} minutes to complete.`, "success");
+    showNotification(`Assessment started! You have ${duration} minutes.`, "success");
     
   } catch (error) {
     console.error("Failed to start assessment:", error);
-    showNotification("Failed to start assessment. Please check your camera permissions.", "error");
+    showNotification(error.message || "Failed to start assessment.", "error");
   }
 }
 
 function renderAssessment() {
   const app = document.getElementById("app");
-  
   app.innerHTML = `
     <div style="height: 100vh; display: flex; flex-direction: column; background: #f8f9fa;">
-      <!-- Header -->
-      <div style="background: white; border-bottom: 1px solid #dee2e6; padding: 15px 20px; display: flex; justify-content: between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+      <header style="background: white; border-bottom: 1px solid #dee2e6; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
         <div>
           <h2 style="margin: 0; color: #333; font-size: 1.4em;">${currentUser.name}</h2>
           <p style="margin: 0; color: #666; font-size: 0.9em;">Question ${currentQuestionIndex + 1} of ${currentUser.questions.length}</p>
@@ -146,12 +133,10 @@ function renderAssessment() {
             <i style="margin-right: 5px;">🔴</i>Recording
           </div>
         </div>
-      </div>
+      </header>
 
-      <!-- Main Content -->
-      <div style="flex: 1; display: flex;">
-        <!-- Question Navigation -->
-        <div style="width: 250px; background: white; border-right: 1px solid #dee2e6; padding: 20px; overflow-y: auto;">
+      <main style="flex: 1; display: flex;">
+        <nav style="width: 250px; background: white; border-right: 1px solid #dee2e6; padding: 20px; overflow-y: auto;">
           <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Questions</h4>
           <div id="questionNav" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 8px; margin-bottom: 20px;">
             ${currentUser.questions.map((_, i) => `
@@ -168,9 +153,8 @@ function renderAssessment() {
             <h5 style="margin-top: 0; font-size: 14px; color: #007bff;">Current Question:</h5>
             <p style="margin: 0; font-size: 13px; line-height: 1.4; color: #333;">${currentUser.questions[currentQuestionIndex]}</p>
           </div>
-        </div>
+        </nav>
 
-        <!-- Code Editor -->
         <div style="flex: 1; display: flex; flex-direction: column; background: white;">
           <div style="padding: 15px 20px; border-bottom: 1px solid #dee2e6; background: #f8f9fa; display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 10px;">
@@ -194,27 +178,18 @@ function renderAssessment() {
             </button>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   `;
 
-  // Setup code editor event listener
-  const editor = document.getElementById('codeEditor');
-  editor.addEventListener('input', () => {
-    currentUser.answers[currentQuestionIndex] = editor.value;
+  document.getElementById('codeEditor').addEventListener('input', (e) => {
+    currentUser.answers[currentQuestionIndex] = e.target.value;
     updateQuestionNavigation();
   });
 }
 
 function switchQuestion(index) {
   if (index === currentQuestionIndex) return;
-  
-  // Save current answer
-  const editor = document.getElementById('codeEditor');
-  if (editor) {
-    currentUser.answers[currentQuestionIndex] = editor.value;
-  }
-  
   currentQuestionIndex = index;
   renderAssessment();
 }
@@ -222,11 +197,7 @@ function switchQuestion(index) {
 function resetCode() {
   if (confirm('Are you sure you want to reset your code for this question?')) {
     currentUser.answers[currentQuestionIndex] = '';
-    const editor = document.getElementById('codeEditor');
-    if (editor) {
-      editor.value = '';
-    }
-    updateQuestionNavigation();
+    renderAssessment();
     showNotification('Code reset for this question.', 'warning');
   }
 }
@@ -234,32 +205,26 @@ function resetCode() {
 function updateQuestionNavigation() {
   const nav = document.getElementById('questionNav');
   if (nav) {
-    nav.innerHTML = currentUser.questions.map((_, i) => `
-      <button onclick="switchQuestion(${i})" 
-              class="question-btn ${i === currentQuestionIndex ? 'active' : ''} ${currentUser.answers[i]?.trim() ? 'answered' : ''}"
-              style="width: 40px; height: 40px; border: 2px solid #dee2e6; background: ${i === currentQuestionIndex ? '#007bff' : currentUser.answers[i]?.trim() ? '#28a745' : 'white'}; 
-                     color: ${i === currentQuestionIndex || currentUser.answers[i]?.trim() ? 'white' : '#333'}; border-radius: 6px; font-weight: bold; cursor: pointer; transition: all 0.2s;">
-        ${i + 1}
-      </button>
-    `).join('');
+    nav.querySelectorAll('button').forEach((button, i) => {
+       button.style.background = i === currentQuestionIndex ? '#007bff' : currentUser.answers[i]?.trim() ? '#28a745' : 'white';
+       button.style.color = i === currentQuestionIndex || currentUser.answers[i]?.trim() ? 'white' : '#333';
+    });
   }
 }
 
 // === TIMER FUNCTIONS ===
 function startTimer() {
   updateTimerDisplay();
-  
   assessmentTimer = setInterval(() => {
     timeRemaining--;
     updateTimerDisplay();
-    
     if (timeRemaining <= 0) {
       clearInterval(assessmentTimer);
       showNotification("Time's up! Submitting automatically...", "warning");
       setTimeout(submitAssessment, 2000);
-    } else if (timeRemaining === 300) { // 5 minutes warning
+    } else if (timeRemaining === 300) {
       showNotification("⚠️ Only 5 minutes remaining!", "warning");
-    } else if (timeRemaining === 60) { // 1 minute warning
+    } else if (timeRemaining === 60) {
       showNotification("⚠️ Only 1 minute remaining!", "error");
     }
   }, 1000);
@@ -268,77 +233,47 @@ function startTimer() {
 function updateTimerDisplay() {
   const minutes = Math.floor(timeRemaining / 60);
   const seconds = timeRemaining % 60;
-  const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  const display = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   
   const timerDisplay = document.getElementById('timeDisplay');
   const timerContainer = document.getElementById('timer');
   
-  if (timerDisplay) {
-    timerDisplay.textContent = display;
-  }
-  
+  if (timerDisplay) timerDisplay.textContent = display;
   if (timerContainer) {
-    if (timeRemaining < 300) { // Less than 5 minutes
-      timerContainer.style.background = '#dc3545';
-    } else if (timeRemaining < 600) { // Less than 10 minutes
-      timerContainer.style.background = '#ffc107';
-      timerContainer.style.color = '#212529';
-    }
+    if (timeRemaining < 60) timerContainer.style.background = '#dc3545';
+    else if (timeRemaining < 300) timerContainer.style.background = '#ffc107';
   }
 }
 
 // === WEBCAM RECORDING ===
 async function setupRecorder() {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-      video: { width: 1280, height: 720 }, 
-      audio: true 
-    });
-    
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 }, audio: true });
     videoChunks = [];
-    mediaRecorder = new MediaRecorder(stream, {
-      mimeType: 'video/webm;codecs=vp8,opus'
-    });
-    
-    mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        videoChunks.push(event.data);
-      }
-    };
-    
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8,opus' });
+    mediaRecorder.ondataavailable = e => e.data.size > 0 && videoChunks.push(e.data);
     mediaRecorder.onstop = async () => {
       const blob = new Blob(videoChunks, { type: 'video/webm' });
       await uploadVideo(blob);
     };
-    
-    mediaRecorder.start(1000); // Record in 1-second chunks
-    console.log("Recording started successfully");
-    
+    mediaRecorder.start(1000);
+    console.log("Recording started.");
   } catch (error) {
-    console.error("Failed to setup recorder:", error);
-    throw new Error("Camera access required for proctored assessment");
+    console.error("Recorder setup failed:", error);
+    throw new Error("Camera access is required for this assessment.");
   }
 }
 
 async function uploadVideo(blob) {
   try {
     const fileName = `assessment-${Date.now()}-${currentUser.name.replace(/\s+/g, '-')}.webm`;
-    
-    const { data, error } = await supabaseClient.storage
-      .from('recordings')
-      .upload(fileName, blob, {
-        contentType: 'video/webm'
-      });
-    
-    if (error) {
-      console.error("Video upload error:", error);
-      showNotification("Video upload failed, but answers were saved.", "warning");
-    } else {
-      console.log("Video uploaded successfully:", fileName);
-      currentUser.videoFileName = fileName;
-    }
+    const { data, error } = await supabaseClient.storage.from('recordings').upload(fileName, blob, { contentType: 'video/webm' });
+    if (error) throw error;
+    console.log("Video uploaded:", data.path);
+    currentUser.videoFileName = data.path;
   } catch (error) {
-    console.error("Video upload failed:", error);
+    console.error("Video upload error:", error);
+    showNotification("Video upload failed, but answers were saved.", "warning");
   }
 }
 
@@ -348,31 +283,77 @@ function setupCheatingDetection() {
     const timestamp = new Date().toISOString();
     currentUser.cheating.push({ event, timestamp, details });
     console.warn(`Cheating detected: ${event}`, details);
-    showNotification(`⚠️ Security Alert: ${event.replace('_', ' ')}`, "error");
+    showNotification(`⚠️ Security Alert: ${event.replace(/_/g, ' ')} detected.`, "error");
   };
 
-  // Tab switching / window focus
   window.addEventListener('blur', () => logEvent('window_blur'));
-  window.addEventListener('focus', () => logEvent('window_focus'));
-  
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-      logEvent('tab_hidden');
-    } else {
-      logEvent('tab_visible');
+  document.addEventListener('visibilitychange', () => document.hidden && logEvent('tab_hidden'));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key)) || (e.ctrlKey && e.key === 'U')) {
+      e.preventDefault();
+      logEvent('devtools_opened');
+    }
+    if (e.key === 'PrintScreen' || (e.metaKey && e.shiftKey)) {
+        logEvent('screenshot_attempt');
     }
   });
+  
+  const contextMenuHandler = (e) => {
+    e.preventDefault();
+    logEvent('context_menu_opened');
+  };
+  window.addEventListener('contextmenu', contextMenuHandler);
+}
 
-  // Keyboard shortcuts
-  document.addEventListener('keydown', (e) => {
-    const forbidden = [
-      { key: 'F12' },
-      { key: 'F5' },
-      { ctrlKey: true, shiftKey: true, key: 'I' },
-      { ctrlKey: true, shiftKey: true, key: 'J' },
-      { ctrlKey: true, key: 'U' },
-      { ctrlKey: true, key: 'R' },
-      { altKey: true, key: 'Tab' }
-    ];
+// === SUBMISSION ===
+async function submitAssessment() {
+  clearInterval(assessmentTimer);
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+  }
 
-    for (const combo
+  showNotification("Submitting your assessment...", "info");
+
+  const submissionData = {
+    candidate_name: currentUser.name,
+    candidate_email: currentUser.email,
+    questions: currentUser.questions,
+    answers: currentUser.answers,
+    cheating_logs: currentUser.cheating,
+    video_file_name: currentUser.videoFileName,
+    submitted_at: new Date().toISOString()
+  };
+
+  const { error } = await supabaseClient.from('submissions').insert(submissionData);
+
+  if (error) {
+    console.error("Submission failed:", error);
+    showNotification("Failed to submit. Please check your connection.", "error");
+  } else {
+    document.getElementById("app").innerHTML = `
+      <div style="text-align: center; padding: 50px;">
+        <h1 style="color: #28a745;">Assessment Submitted!</h1>
+        <p>Your assessment has been successfully submitted. Thank you.</p>
+      </div>
+    `;
+  }
+}
+
+function showNotification(message, type = 'info') {
+    const container = document.body;
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed; top: 20px; right: 20px; padding: 15px; border-radius: 8px; 
+        background: ${type === 'error' ? '#f8d7da' : type === 'success' ? '#d4edda' : '#cce5ff'}; 
+        color: ${type === 'error' ? '#721c24' : type === 'success' ? '#155724' : '#004085'};
+        border: 1px solid ${type === 'error' ? '#f5c6cb' : type === 'success' ? '#c3e6cb' : '#b8daff'};
+        z-index: 1000;
+    `;
+    container.appendChild(notification);
+    setTimeout(() => notification.remove(), 4000);
+}
+
+// --- INITIALIZE ---
+document.addEventListener('DOMContentLoaded', showIntro);
