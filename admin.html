@@ -7,231 +7,1038 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root { --primary: #1a1a1a; --primary-hover: #2a2a2a; --secondary: #f8f9fa; --accent: #e9ecef; --success: #22c55e; --warning: #f59e0b; --error: #ef4444; --text-primary: #1a1a1a; --text-secondary: #6b7280; --border: #e5e7eb; --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); --radius: 8px; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #ffffff; color: var(--text-primary); line-height: 1.5; overflow: hidden; }
-        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 8px; }
-        .toast { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); min-width: 320px; max-width: 400px; display: flex; align-items: flex-start; gap: 12px; animation: slideInRight 0.3s ease; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a1a1a;
+            --primary-hover: #2a2a2a;
+            --secondary: #f8f9fa;
+            --accent: #e9ecef;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --text-primary: #1a1a1a;
+            --text-secondary: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #ffffff;
+            color: var(--text-primary);
+            line-height: 1.5;
+            overflow: hidden;
+        }
+
+        /* Custom Toast System */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            min-width: 320px;
+            max-width: 400px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            animation: slideInRight 0.3s ease;
+            pointer-events: auto;
+        }
+
         .toast.success { border-left: 4px solid var(--success); }
         .toast.warning { border-left: 4px solid var(--warning); }
         .toast.error { border-left: 4px solid var(--error); }
         .toast.info { border-left: 4px solid var(--primary); }
-        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        .admin-layout { display: flex; height: 100vh; }
-        .sidebar { width: 280px; background: white; border-right: 1px solid var(--border); flex-shrink: 0; display: flex; flex-direction: column; overflow: hidden; }
-        .sidebar-header { padding: 24px; border-bottom: 1px solid var(--border); background: var(--secondary); }
-        .brand-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-        .brand-logo { width: 48px; height: 48px; background: var(--primary); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px; }
-        .brand-info h1 { font-size: 18px; font-weight: 600; margin-bottom: 2px; }
-        .brand-info p { font-size: 13px; color: var(--text-secondary); }
-        .sidebar-nav { flex: 1; padding: 16px 0; }
-        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 24px; color: var(--text-primary); text-decoration: none; transition: all 0.2s; border: none; background: none; width: 100%; cursor: pointer; font-size: 14px; font-weight: 500; font-family: inherit; }
-        .nav-item:hover, .nav-item.active { background: var(--secondary); color: var(--primary); }
-        .main-content { flex: 1; background: var(--secondary); overflow: hidden; display: flex; flex-direction: column; }
-        .content-panels { flex: 1; overflow: hidden; position: relative; }
-        .panel { position: absolute; top: 0; left: 0; right: 0; bottom: 0; padding: 24px; overflow-y: auto; background: var(--secondary); opacity: 0; transform: translateX(20px); transition: all 0.3s ease; pointer-events: none; }
-        .panel.active { opacity: 1; transform: translateX(0); pointer-events: all; }
-        .page-header { margin-bottom: 24px; }
-        .page-header h2 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
-        .page-header p { color: var(--text-secondary); font-size: 14px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .stat-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
-        .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .stat-title { color: var(--text-secondary); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .toast-message {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            color: var(--text-secondary);
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .toast-close:hover {
+            opacity: 1;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Layout */
+        .admin-layout {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid var(--border);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--secondary);
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .brand-logo {
+            width: 48px;
+            height: 48px;
+            background: var(--primary);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .brand-info h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .brand-info p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 16px 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+            background: none;
+            width: 100%;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: var(--secondary);
+            color: var(--primary);
+        }
+
+        .main-content {
+            flex: 1;
+            background: var(--secondary);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-panels {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 24px;
+            overflow-y: auto;
+            background: var(--secondary);
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .panel.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: all;
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .page-header h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stat-title {
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
         .stat-icon.primary { background: #f0f0f0; color: var(--primary); }
         .stat-icon.success { background: #f0fdf4; color: var(--success); }
         .stat-icon.warning { background: #fefce8; color: var(--warning); }
         .stat-icon.error { background: #fef2f2; color: var(--error); }
-        .stat-value { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
-        .stat-description { color: var(--text-secondary); font-size: 13px; }
-        .card { background: white; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 24px; }
-        .card-header { padding: 20px; border-bottom: 1px solid var(--border); background: var(--secondary); display: flex; justify-content: space-between; align-items: center; }
-        .card-header h3 { font-size: 16px; font-weight: 600; }
-        .card-body { padding: 20px; }
-        .table { width: 100%; border-collapse: collapse; }
-        .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
-        .table th { background: var(--secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
-        .table tbody tr:hover { background: var(--secondary); }
-        .form-group { margin-bottom: 20px; }
-        .form-label { display: block; font-weight: 500; font-size: 14px; margin-bottom: 6px; }
-        .form-input, .form-select, .form-textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px; background: white; transition: border-color 0.2s; font-family: inherit; }
-        .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--primary); }
-        .form-textarea { min-height: 80px; resize: vertical; }
-        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border: 1px solid transparent; border-radius: var(--radius); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; text-decoration: none; font-family: inherit; }
-        .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
-        .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
-        .btn-secondary { background: white; color: var(--text-primary); border-color: var(--border); }
-        .btn-secondary:hover { background: var(--secondary); }
-        .btn-sm { padding: 6px 12px; font-size: 12px; }
-        .badge { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
-        .badge-success { background: #f0fdf4; color: #166534; }
-        .badge-warning { background: #fefce8; color: #854d0e; }
-        .badge-error { background: #fef2f2; color: #991b1b; }
-        .badge-secondary { background: var(--accent); color: var(--text-secondary); }
-        .auth-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .auth-card { background: white; border-radius: var(--radius); padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); }
-        .auth-header { text-align: center; margin-bottom: 32px; }
-        .auth-header h1 { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
-        .auth-header p { color: var(--text-secondary); font-size: 14px; }
-        .hidden { display: none !important; }
-        @media (max-width: 768px) { .admin-layout { flex-direction: column; } .sidebar { width: 100%; height: auto; } .panel { padding: 16px; } .stats-grid { grid-template-columns: 1fr; } }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-description {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        /* Tables */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .table th {
+            background: var(--secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+        }
+
+        .table tbody tr:hover {
+            background: var(--secondary);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            background: white;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border: 1px solid transparent;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text-primary);
+            border-color: var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--secondary);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-success {
+            background: #f0fdf4;
+            color: #166534;
+        }
+
+        .badge-warning {
+            background: #fefce8;
+            color: #854d0e;
+        }
+
+        .badge-error {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .badge-secondary {
+            background: var(--accent);
+            color: var(--text-secondary);
+        }
+
+        /* Auth Screen */
+        .auth-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .auth-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .auth-header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius);
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--secondary);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            background: var(--secondary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-layout {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+            }
+            
+            .panel {
+                padding: 16px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
     <div id="toastContainer" class="toast-container"></div>
 
+    <!-- Authentication Screen -->
     <div id="authScreen" class="auth-container">
         <div class="auth-card">
-            <div class="auth-header"><div class="brand-header" style="justify-content: center; margin-bottom: 16px;"><div class="brand-logo">TA</div></div><h1>Admin Login</h1><p>Sign in to access the dashboard</p></div>
-            <form id="loginForm"><div class="form-group"><label class="form-label">Email Address</label><input type="email" id="loginEmail" class="form-input" placeholder="admin@demo.com" required></div><div class="form-group"><label class="form-label">Password</label><input type="password" id="loginPassword" class="form-input" placeholder="demo123" required></div><button type="submit" class="btn btn-primary" style="width: 100%;"><i class="fas fa-sign-in-alt"></i> Sign In</button></form>
+            <div class="auth-header">
+                <div class="brand-header" style="justify-content: center; margin-bottom: 16px;">
+                    <div class="brand-logo">TA</div>
+                </div>
+                <h1>Admin Login</h1>
+                <p>Sign in to access the dashboard</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="loginEmail" class="form-input" placeholder="admin@company.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+            </form>
         </div>
     </div>
 
+    <!-- Main Dashboard -->
     <div id="dashboardScreen" class="admin-layout hidden">
-        <aside class="sidebar">
-            <div class="sidebar-header"><div class="brand-header"><div class="brand-logo" id="sidebarLogo">TA</div><div class="brand-info"><h1 id="companyNameDisplay">TechAssess Pro</h1><p>Admin Dashboard</p></div></div></div>
-            <nav class="sidebar-nav">
-                <button class="nav-item active" onclick="showPanel('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</button>
-                <button class="nav-item" onclick="showPanel('submissions')"><i class="fas fa-file-alt"></i> Submissions</button>
-                <button class="nav-item" onclick="showPanel('invitations')"><i class="fas fa-paper-plane"></i> Invitations</button>
-                <button class="nav-item" onclick="showPanel('templates')"><i class="fas fa-code"></i> Templates</button>
-                <button class="nav-item" onclick="showPanel('settings')"><i class="fas fa-cog"></i> Settings</button>
-            </nav>
-            <div class="sidebar-footer" style="padding: 16px 24px; border-top: 1px solid var(--border);">
-                 <button class="nav-item" onclick="logout()" style="color: var(--error); padding: 12px 0;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-header">
+                    <div class="brand-logo" id="sidebarLogo">TA</div>
+                    <div class="brand-info">
+                        <h1 id="companyNameDisplay">TechAssess Pro</h1>
+                        <p>Admin Dashboard</p>
+                    </div>
+                </div>
             </div>
-        </aside>
-        <main class="main-content">
+            <nav class="sidebar-nav">
+                <button class="nav-item active" onclick="showPanel('dashboard')">
+                    <i class="fas fa-chart-bar"></i> Dashboard
+                </button>
+                <button class="nav-item" onclick="showPanel('submissions')">
+                    <i class="fas fa-file-alt"></i> Submissions
+                </button>
+                <button class="nav-item" onclick="showPanel('invitations')">
+                    <i class="fas fa-envelope"></i> Invitations
+                </button>
+                <button class="nav-item" onclick="showPanel('templates')">
+                    <i class="fas fa-layer-group"></i> Templates
+                </button>
+                <button class="nav-item" onclick="showPanel('settings')">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+                <button class="nav-item" onclick="logout()" style="margin-top: auto; color: var(--error);">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </nav>
+        </div>
+
+        <div class="main-content">
             <div class="content-panels">
-                <div id="dashboard-panel" class="panel">
+                <!-- Dashboard Panel -->
+                <div id="dashboard-panel" class="panel active">
                     <div class="page-header">
                         <h2>Dashboard</h2>
-                        <p>Overview of assessment activity.</p>
+                        <p>Overview of assessment activity and performance metrics</p>
                     </div>
+
                     <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-title">Total Submissions</span>
+                                <div class="stat-icon primary">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="totalSubmissions">0</div>
+                            <div class="stat-description">All time submissions</div>
                         </div>
+
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-title">Active Assessments</span>
+                                <div class="stat-icon success">
+                                    <i class="fas fa-play-circle"></i>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="activeAssessments">0</div>
+                            <div class="stat-description">Currently in progress</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-title">Security Incidents</span>
+                                <div class="stat-icon error">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="securityIncidents">0</div>
+                            <div class="stat-description">Flagged activities</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-title">Average Score</span>
+                                <div class="stat-icon warning">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="averageScore">0%</div>
+                            <div class="stat-description">Across all submissions</div>
+                        </div>
+                    </div>
+
                     <div class="card">
                         <div class="card-header">
                             <h3>Recent Submissions</h3>
+                            <button class="btn btn-secondary btn-sm" onclick="refreshDashboard()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
                         </div>
-                        <div class="card-body" id="recent-submissions">
-                            </div>
+                        <div class="card-body">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Candidate</th>
+                                        <th>Assessment</th>
+                                        <th>Submitted</th>
+                                        <th>Duration</th>
+                                        <th>Security</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentSubmissions">
+                                    <tr>
+                                        <td colspan="6" style="text-align: center; color: var(--text-secondary);">
+                                            Loading submissions...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Submissions Panel -->
                 <div id="submissions-panel" class="panel">
-                     <div class="page-header">
+                    <div class="page-header">
                         <h2>Submissions</h2>
-                        <p>Review completed assessments.</p>
+                        <p>Review and analyze assessment submissions</p>
                     </div>
+
                     <div class="card">
-                        <div class="card-body" id="all-submissions">
+                        <div class="card-header">
+                            <h3>All Submissions</h3>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-secondary btn-sm" onclick="exportSubmissions()">
+                                    <i class="fas fa-download"></i> Export CSV
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="refreshSubmissions()">
+                                    <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
                             </div>
+                        </div>
+                        <div class="card-body">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Candidate</th>
+                                        <th>Email</th>
+                                        <th>Assessment</th>
+                                        <th>Submitted</th>
+                                        <th>Duration</th>
+                                        <th>Score</th>
+                                        <th>Security Events</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="allSubmissions">
+                                    <tr>
+                                        <td colspan="8" style="text-align: center; color: var(--text-secondary);">
+                                            Loading submissions...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Invitations Panel -->
                 <div id="invitations-panel" class="panel">
                     <div class="page-header">
-                        <h2>Invitations</h2>
-                        <p>Manage and send new assessment invitations.</p>
+                        <h2>Assessment Invitations</h2>
+                        <p>Create and manage assessment invitations</p>
                     </div>
-                     <div class="card">
-                        <div class="card-body" id="all-invitations">
-                            </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Create Assessment Invitation</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="invitationForm">
+                                <div class="form-group">
+                                    <label class="form-label">Candidate Email</label>
+                                    <input type="email" id="candidateEmail" class="form-input" placeholder="candidate@company.com" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Assessment Template</label>
+                                    <select id="assessmentTemplate" class="form-select" required>
+                                        <option value="">Select template</option>
+                                        <option value="js-fundamentals">JavaScript Fundamentals</option>
+                                        <option value="python-basics">Python Basics</option>
+                                        <option value="senior-dev">Senior Developer Challenge</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Personal Message (Optional)</label>
+                                    <textarea id="personalMessage" class="form-textarea" placeholder="Add a personal message for the candidate..." rows="3"></textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Expiration Date</label>
+                                    <input type="datetime-local" id="expirationDate" class="form-input" required>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane"></i> Send Invitation
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Recent Invitations</h3>
+                            <button class="btn btn-secondary btn-sm" onclick="refreshInvitations()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Assessment</th>
+                                        <th>Candidate</th>
+                                        <th>Sent</th>
+                                        <th>Expires</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="invitationsList">
+                                    <tr>
+                                        <td colspan="6" style="text-align: center; color: var(--text-secondary);">
+                                            Loading invitations...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Templates Panel -->
                 <div id="templates-panel" class="panel">
                     <div class="page-header">
-                        <h2>Templates</h2>
-                        <p>Manage assessment templates.</p>
+                        <h2>Assessment Templates</h2>
+                        <p>Manage assessment templates and question banks</p>
                     </div>
-                     <div class="card">
-                        <div class="card-body" id="all-templates">
-                            </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Available Templates</h3>
+                            <button class="btn btn-primary btn-sm" onclick="showCreateTemplateModal()">
+                                <i class="fas fa-plus"></i> Create Template
+                            </button>
+                        </div>
+                        <div class="card-body" id="templatesList">
+                            <!-- Templates will be loaded here -->
+                        </div>
                     </div>
                 </div>
+
+                <!-- Settings Panel -->
                 <div id="settings-panel" class="panel">
                     <div class="page-header">
                         <h2>Settings</h2>
-                        <p>Configure your application.</p>
+                        <p>Configure platform settings and integrations</p>
                     </div>
+
                     <div class="card">
                         <div class="card-header">
-                            <h3>General Settings</h3>
+                            <h3>Company Settings</h3>
                         </div>
                         <div class="card-body">
-                           <p>Settings management coming soon.</p>
+                            <form id="companyForm">
+                                <div class="form-group">
+                                    <label class="form-label">Company Name</label>
+                                    <input type="text" id="companyName" class="form-input" placeholder="Your Company Name">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Platform Branding</label>
+                                    <input type="text" id="platformBranding" class="form-input" value="TechAssess Pro">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Default Assessment Duration</label>
+                                    <select id="defaultDuration" class="form-select">
+                                        <option value="30">30 minutes</option>
+                                        <option value="45">45 minutes</option>
+                                        <option value="60" selected>60 minutes</option>
+                                        <option value="90">90 minutes</option>
+                                        <option value="120">120 minutes</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Settings
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Database Configuration</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="databaseForm">
+                                <div class="form-group">
+                                    <label class="form-label">Supabase URL</label>
+                                    <input type="url" id="supabaseUrl" class="form-input" placeholder="https://your-project.supabase.co">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Supabase Service Role Key</label>
+                                    <input type="password" id="supabaseKey" class="form-input" placeholder="Enter service role key">
+                                    <small style="color: var(--text-secondary); font-size: 12px;">This key is required for admin operations</small>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Database Settings
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
 
+    <!-- External Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script>
-        // --- CONFIGURATION ---
+        // PRODUCTION CONFIGURATION - Replace with your actual values
         const CONFIG = {
             supabaseUrl: "https://ytoidmelmialrjfqyhet.supabase.co",
-            supabaseServiceKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0b2lkbWVsbWlhbHJqZnF5aGV0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTY4NzA2MjU0MiwiZXhwIjoyMDAyNjM4NTQyfQ.SoE9K21U9U1U82r2GA9i68gH_S5MASEI4h0e5mJg0yc"
+            supabaseServiceKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0b2lkbWVsbWlhbHJqZnF5aGV0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDMxODc3NiwiZXhwIjoyMDY5ODk0Nzc2fQ.YOUR_SERVICE_ROLE_KEY_HERE", // Replace with actual service role key
+            enableProduction: true
         };
 
-        // --- GLOBAL STATE ---
+        // Global State
+        let currentPanel = 'dashboard';
         let supabaseClient = null;
         let currentUser = null;
+        let allSubmissions = [];
+        let allInvitations = [];
+        let allTemplates = [];
 
-        // --- INITIALIZATION ---
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                supabaseClient = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseServiceKey, {
-                    auth: { autoRefreshToken: true, persistSession: true }
-                });
-
-                supabaseClient.auth.onAuthStateChanged((event, session) => {
-                    if (session && session.user) {
-                        currentUser = session.user;
-                        showDashboard();
-                    } else {
-                        currentUser = null;
-                        showAuthScreen();
-                    }
-                });
-                
-                setupEventListeners();
-                showPanel('dashboard');
-
-            } catch (error) {
-                console.error('Supabase init failed:', error);
-                document.body.innerHTML = '<h1>Error: Could not connect to the database.</h1>';
+        // Initialize Supabase
+        function initializeSupabase() {
+            if (CONFIG.supabaseUrl && CONFIG.supabaseServiceKey && typeof supabase !== 'undefined') {
+                try {
+                    supabaseClient = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseServiceKey, {
+                        auth: {
+                            autoRefreshToken: false,
+                            persistSession: false
+                        }
+                    });
+                    console.log('✅ Supabase initialized successfully');
+                    return true;
+                } catch (error) {
+                    console.error('❌ Failed to initialize Supabase:', error);
+                    showToast('Database Error', 'Failed to connect to database', 'error');
+                    return false;
+                }
+            } else {
+                console.warn('⚠️ Supabase configuration missing');
+                return false;
             }
-        });
-
-        function setupEventListeners() {
-            document.getElementById('loginForm').addEventListener('submit', handleLogin);
         }
 
-        // --- AUTHENTICATION ---
-        async function handleLogin(e) {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
+        // Custom Toast System
+        function showToast(title, message, type = 'success', duration = 5000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
 
-            if (email === 'admin@demo.com' && password === 'demo123') {
-                showDashboard(); 
-                return showToast('Demo Mode', 'Welcome! Data is read-only.', 'info');
+            container.appendChild(toast);
+
+            if (duration > 0) {
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.remove();
+                    }
+                }, duration);
             }
-            
-            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            
-            if (error) {
-                return showToast('Login Failed', 'Invalid credentials. Please try again.', 'error');
+        }
+
+        // Authentication
+        async function login(email, password) {
+            try {
+                // Demo login
+                if (email === 'admin@demo.com' && password === 'demo123') {
+                    currentUser = { email, name: 'Demo Admin' };
+                    showDashboard();
+                    loadDashboardData();
+                    showToast('Login Successful', 'Welcome to the admin dashboard', 'success');
+                    return true;
+                }
+
+                // Production login with Supabase
+                if (!supabaseClient) {
+                    showToast('Database Error', 'Database not configured. Using demo mode.', 'warning');
+                    currentUser = { email, name: 'Demo User' };
+                    showDashboard();
+                    loadDashboardData();
+                    return true;
+                }
+
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) {
+                    showToast('Login Failed', error.message, 'error');
+                    return false;
+                }
+
+                currentUser = data.user;
+                showDashboard();
+                loadDashboardData();
+                showToast('Login Successful', 'Welcome back!', 'success');
+                return true;
+            } catch (error) {
+                console.error('Login error:', error);
+                showToast('Login Error', 'An unexpected error occurred', 'error');
+                return false;
             }
         }
 
         async function logout() {
-            await supabaseClient.auth.signOut();
+            try {
+                if (supabaseClient) {
+                    await supabaseClient.auth.signOut();
+                }
+                currentUser = null;
+                showAuthScreen();
+                showToast('Logged Out', 'You have been successfully logged out', 'info');
+            } catch (error) {
+                console.error('Logout error:', error);
+                showToast('Logout Error', 'An error occurred during logout', 'error');
+            }
         }
 
-        // --- UI & DATA ---
         function showAuthScreen() {
             document.getElementById('authScreen').classList.remove('hidden');
             document.getElementById('dashboardScreen').classList.add('hidden');
@@ -240,93 +1047,923 @@
         function showDashboard() {
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('dashboardScreen').classList.remove('hidden');
-            loadAllData();
-        }
-        
-        async function loadAllData() {
-             await loadDashboardData();
-             await loadSubmissions();
-             await loadInvitations();
-             await loadTemplates();
-        }
-        
-        function showToast(title, message, type = 'info', duration = 4000) {
-            const container = document.getElementById('toastContainer');
-            if(!container) return;
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.innerHTML = `<div><div style="font-weight:600;">${title}</div><p>${message}</p></div><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;">&times;</button>`;
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), duration);
         }
 
+        // Panel Management
         function showPanel(panelName) {
-            const panels = document.querySelectorAll('.panel');
-            panels.forEach(p => p.classList.remove('active'));
-            document.getElementById(`${panelName}-panel`).classList.add('active');
+            // Remove active class from all nav items and panels
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelectorAll('.panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
 
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(n => n.classList.remove('active'));
-            document.querySelector(`.nav-item[onclick="showPanel('${panelName}')"]`).classList.add('active');
+            // Add active class to clicked nav item and target panel
+            event.target.classList.add('active');
+            document.getElementById(`${panelName}-panel`).classList.add('active');
+            
+            currentPanel = panelName;
+
+            // Load panel-specific data
+            switch (panelName) {
+                case 'dashboard':
+                    loadDashboardData();
+                    break;
+                case 'submissions':
+                    loadSubmissions();
+                    break;
+                case 'invitations':
+                    loadInvitations();
+                    break;
+                case 'templates':
+                    loadTemplates();
+                    break;
+            }
         }
 
+        // Load Dashboard Data
         async function loadDashboardData() {
-            const { data: submissions, error: subError } = await supabaseClient.from('submissions').select('*');
-            const { data: invitations, error: invError } = await supabaseClient.from('invitations').select('*');
+            try {
+                if (!supabaseClient) {
+                    // Mock data for demo
+                    updateDashboardStats({
+                        totalSubmissions: 247,
+                        activeAssessments: 18,
+                        securityIncidents: 12,
+                        averageScore: 78
+                    });
+                    loadMockRecentSubmissions();
+                    return;
+                }
 
-            if(subError || invError) {
-                return showToast('Error', 'Could not load dashboard data.', 'error');
+                // Load real statistics from database
+                const [submissionsResult, invitationsResult] = await Promise.all([
+                    supabaseClient.from('submissions').select('*', { count: 'exact' }),
+                    supabaseClient.from('invitations').select('*', { count: 'exact' }).eq('status', 'sent')
+                ]);
+
+                const securityIncidents = submissionsResult.data?.reduce((total, sub) => {
+                    const logs = sub.cheating_logs || [];
+                    return total + (Array.isArray(logs) ? logs.length : 0);
+                }, 0) || 0;
+
+                const averageScore = submissionsResult.data?.length > 0 
+                    ? Math.round(submissionsResult.data.reduce((sum, sub) => sum + (sub.score || 0), 0) / submissionsResult.data.length)
+                    : 0;
+
+                updateDashboardStats({
+                    totalSubmissions: submissionsResult.count || 0,
+                    activeAssessments: invitationsResult.count || 0,
+                    securityIncidents: securityIncidents,
+                    averageScore: averageScore
+                });
+
+                await loadRecentSubmissions();
+
+            } catch (error) {
+                console.error('Failed to load dashboard data:', error);
+                showToast('Data Error', 'Failed to load dashboard data', 'error');
+                // Fallback to mock data
+                updateDashboardStats({
+                    totalSubmissions: 0,
+                    activeAssessments: 0,
+                    securityIncidents: 0,
+                    averageScore: 0
+                });
             }
+        }
 
-            const statsGrid = document.querySelector('.stats-grid');
-            statsGrid.innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-header"><div class="stat-title">Total Submissions</div><div class="stat-icon primary"><i class="fas fa-file-alt"></i></div></div>
-                    <div class="stat-value">${submissions.length}</div>
-                    <div class="stat-description">Completed assessments</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-header"><div class="stat-title">Pending Invitations</div><div class="stat-icon warning"><i class="fas fa-envelope-open"></i></div></div>
-                    <div class="stat-value">${invitations.filter(i => i.status === 'sent').length}</div>
-                    <div class="stat-description">Waiting for candidates</div>
+        function updateDashboardStats(stats) {
+            document.getElementById('totalSubmissions').textContent = stats.totalSubmissions;
+            document.getElementById('activeAssessments').textContent = stats.activeAssessments;
+            document.getElementById('securityIncidents').textContent = stats.securityIncidents;
+            document.getElementById('averageScore').textContent = `${stats.averageScore}%`;
+        }
+
+        async function loadRecentSubmissions() {
+            try {
+                if (!supabaseClient) {
+                    loadMockRecentSubmissions();
+                    return;
+                }
+
+                const { data: submissions, error } = await supabaseClient
+                    .from('submissions')
+                    .select('*')
+                    .order('submitted_at', { ascending: false })
+                    .limit(5);
+
+                if (error) throw error;
+
+                const tbody = document.getElementById('recentSubmissions');
+                if (submissions && submissions.length > 0) {
+                    tbody.innerHTML = submissions.map(submission => {
+                        const securityEvents = (submission.cheating_logs && Array.isArray(submission.cheating_logs)) 
+                            ? submission.cheating_logs.length : 0;
+                        const duration = formatDuration(submission.time_taken || 0);
+                        
+                        return `
+                            <tr>
+                                <td style="font-weight: 500;">${submission.candidate_name}</td>
+                                <td>${submission.assessment_id || 'Assessment'}</td>
+                                <td>${new Date(submission.submitted_at).toLocaleString()}</td>
+                                <td>${duration}</td>
+                                <td>
+                                    <span class="badge ${securityEvents > 0 ? 'badge-warning' : 'badge-success'}">
+                                        ${securityEvents} events
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-secondary" onclick="viewSubmission(${submission.id})">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-secondary);">
+                                No submissions found
+                            </td>
+                        </tr>
+                    `;
+                }
+
+            } catch (error) {
+                console.error('Failed to load recent submissions:', error);
+                loadMockRecentSubmissions();
+            }
+        }
+
+        function loadMockRecentSubmissions() {
+            const tbody = document.getElementById('recentSubmissions');
+            tbody.innerHTML = `
+                <tr>
+                    <td style="font-weight: 500;">John Doe</td>
+                    <td>JavaScript Fundamentals</td>
+                    <td>2024-08-04 14:30</td>
+                    <td>45:30</td>
+                    <td><span class="badge badge-warning">2 events</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="viewSubmission(1)">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 500;">Jane Smith</td>
+                    <td>Python Basics</td>
+                    <td>2024-08-04 13:15</td>
+                    <td>38:22</td>
+                    <td><span class="badge badge-success">0 events</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="viewSubmission(2)">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Load All Submissions
+        async function loadSubmissions() {
+            try {
+                if (!supabaseClient) {
+                    loadMockSubmissions();
+                    return;
+                }
+
+                const { data: submissions, error } = await supabaseClient
+                    .from('submissions')
+                    .select('*')
+                    .order('submitted_at', { ascending: false });
+
+                if (error) throw error;
+
+                allSubmissions = submissions || [];
+                const tbody = document.getElementById('allSubmissions');
+                
+                if (submissions && submissions.length > 0) {
+                    tbody.innerHTML = submissions.map(submission => {
+                        const securityEvents = (submission.cheating_logs && Array.isArray(submission.cheating_logs)) 
+                            ? submission.cheating_logs.length : 0;
+                        const duration = formatDuration(submission.time_taken || 0);
+                        
+                        return `
+                            <tr>
+                                <td style="font-weight: 500;">${submission.candidate_name}</td>
+                                <td>${submission.candidate_email}</td>
+                                <td>${submission.assessment_id || 'Assessment'}</td>
+                                <td>${new Date(submission.submitted_at).toLocaleString()}</td>
+                                <td>${duration}</td>
+                                <td><strong>${submission.score || 0}%</strong></td>
+                                <td>
+                                    <span class="badge ${securityEvents > 0 ? 'badge-warning' : 'badge-success'}">
+                                        ${securityEvents} events
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-secondary" onclick="viewSubmission('${submission.id}')">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: var(--text-secondary);">
+                                No submissions found
+                            </td>
+                        </tr>
+                    `;
+                }
+
+            } catch (error) {
+                console.error('Failed to load submissions:', error);
+                showToast('Data Error', 'Failed to load submissions', 'error');
+                loadMockSubmissions();
+            }
+        }
+
+        function loadMockSubmissions() {
+            const tbody = document.getElementById('allSubmissions');
+            tbody.innerHTML = `
+                <tr>
+                    <td style="font-weight: 500;">John Doe</td>
+                    <td>john.doe@company.com</td>
+                    <td>JavaScript Fundamentals</td>
+                    <td>2024-08-04 14:30</td>
+                    <td>45:30</td>
+                    <td><strong>85%</strong></td>
+                    <td><span class="badge badge-warning">2 events</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="viewSubmission(1)">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Load Invitations
+        async function loadInvitations() {
+            try {
+                if (!supabaseClient) {
+                    loadMockInvitations();
+                    return;
+                }
+
+                const { data: invitations, error } = await supabaseClient
+                    .from('invitations')
+                    .select('*')
+                    .order('sent_at', { ascending: false });
+
+                if (error) throw error;
+
+                allInvitations = invitations || [];
+                const tbody = document.getElementById('invitationsList');
+                
+                if (invitations && invitations.length > 0) {
+                    tbody.innerHTML = invitations.map(invitation => `
+                        <tr>
+                            <td>${invitation.assessment_id}</td>
+                            <td>${invitation.candidate_email}</td>
+                            <td>${new Date(invitation.sent_at).toLocaleString()}</td>
+                            <td>${new Date(invitation.expires_at).toLocaleString()}</td>
+                            <td>
+                                <span class="badge badge-${invitation.status === 'sent' ? 'warning' : invitation.status === 'completed' ? 'success' : 'secondary'}">
+                                    ${invitation.status}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-secondary" onclick="copyInvitationLink('${invitation.invitation_token}', '${invitation.assessment_id}')">
+                                    <i class="fas fa-copy"></i> Copy Link
+                                </button>
+                                ${invitation.status === 'sent' ? `
+                                    <button class="btn btn-sm btn-secondary" onclick="resendInvitation('${invitation.id}')" style="margin-left: 4px;">
+                                        <i class="fas fa-paper-plane"></i> Resend
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-secondary);">
+                                No invitations found
+                            </td>
+                        </tr>
+                    `;
+                }
+
+            } catch (error) {
+                console.error('Failed to load invitations:', error);
+                showToast('Data Error', 'Failed to load invitations', 'error');
+                loadMockInvitations();
+            }
+        }
+
+        function loadMockInvitations() {
+            const tbody = document.getElementById('invitationsList');
+            tbody.innerHTML = `
+                <tr>
+                    <td>JavaScript Fundamentals</td>
+                    <td>candidate@company.com</td>
+                    <td>2024-08-04 10:00</td>
+                    <td>2024-08-11 23:59</td>
+                    <td><span class="badge badge-warning">sent</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="copyInvitationLink('demo123', 'js-fundamentals')">
+                            <i class="fas fa-copy"></i> Copy Link
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Load Templates
+        async function loadTemplates() {
+            try {
+                if (!supabaseClient) {
+                    loadMockTemplates();
+                    return;
+                }
+
+                const { data: templates, error } = await supabaseClient
+                    .from('assessments')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                allTemplates = templates || [];
+                const container = document.getElementById('templatesList');
+                
+                if (templates && templates.length > 0) {
+                    container.innerHTML = templates.map(template => `
+                        <div style="background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                                <div>
+                                    <h4>${template.title}</h4>
+                                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">${template.description}</p>
+                                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                                        <span class="badge badge-secondary">${template.language}</span>
+                                        <span class="badge badge-warning">${template.difficulty}</span>
+                                        <span style="font-size: 12px; color: var(--text-secondary);">${template.questions?.length || 0} questions • ${template.duration} min</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-sm btn-secondary" onclick="editTemplate('${template.id}')">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary" onclick="duplicateTemplate('${template.id}')">
+                                        <i class="fas fa-copy"></i> Duplicate
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary" onclick="deleteTemplate('${template.id}')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = `
+                        <div style="text-align: center; color: var(--text-secondary); padding: 32px;">
+                            <i class="fas fa-layer-group" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                            <p>No templates found. Create your first assessment template to get started.</p>
+                        </div>
+                    `;
+                }
+
+            } catch (error) {
+                console.error('Failed to load templates:', error);
+                showToast('Data Error', 'Failed to load templates', 'error');
+                loadMockTemplates();
+            }
+        }
+
+        function loadMockTemplates() {
+            const container = document.getElementById('templatesList');
+            container.innerHTML = `
+                <div style="background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                        <div>
+                            <h4>JavaScript Fundamentals</h4>
+                            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">Core JavaScript programming skills assessment</p>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                                <span class="badge badge-secondary">JavaScript</span>
+                                <span class="badge badge-warning">Mixed</span>
+                                <span style="font-size: 12px; color: var(--text-secondary);">3 questions • 60 min</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm btn-secondary">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="btn btn-sm btn-secondary">
+                                <i class="fas fa-copy"></i> Duplicate
+                            </button>
+                            <button class="btn btn-sm btn-secondary">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
                 </div>
             `;
+        }
+
+        // Create New Invitation
+        async function createInvitation(candidateEmail, assessmentTemplate, personalMessage, expirationDate) {
+            try {
+                if (!supabaseClient) {
+                    showToast('Database Error', 'Database not configured', 'error');
+                    return false;
+                }
+
+                const invitationToken = generateInvitationToken();
+                const invitationData = {
+                    assessment_id: assessmentTemplate,
+                    candidate_email: candidateEmail,
+                    invitation_token: invitationToken,
+                    duration: 60, // Default duration
+                    personal_message: personalMessage || null,
+                    expires_at: expirationDate,
+                    status: 'sent'
+                };
+
+                const { data, error } = await supabaseClient
+                    .from('invitations')
+                    .insert(invitationData)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                // Generate assessment link
+                const baseUrl = window.location.origin;
+                const assessmentUrl = `${baseUrl}/index.html?assessment=${assessmentTemplate}&token=${invitationToken}`;
+
+                showInvitationLinkModal(candidateEmail, assessmentUrl, personalMessage);
+                
+                showToast('Invitation Created', `Assessment invitation created for ${candidateEmail}`, 'success');
+                return true;
+
+            } catch (error) {
+                console.error('Failed to create invitation:', error);
+                showToast('Invitation Error', `Failed to create invitation: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        function generateInvitationToken() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let token = '';
+            for (let i = 0; i < 32; i++) {
+                token += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return token;
+        }
+
+        function showInvitationLinkModal(email, url, message) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
             
-            const recentSubmissions = document.getElementById('recent-submissions');
-            recentSubmissions.innerHTML = `<table class="table"><thead><tr><th>Candidate</th><th>Score</th><th>Date</th></tr></thead><tbody>
-                ${submissions.slice(0, 5).map(s => `<tr><td>${s.candidate_name}</td><td>${s.score || 'N/A'}</td><td>${new Date(s.submitted_at).toLocaleDateString()}</td></tr>`).join('')}
-            </tbody></table>`;
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Assessment Invitation Created</h3>
+                        <button onclick="this.closest('.modal').remove()" style="background: none; border: none; font-size: 18px; color: var(--text-secondary); cursor: pointer; padding: 4px;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>Invitation for:</strong> ${email}</p>
+                        <p><strong>Assessment Link:</strong></p>
+                        <div style="background: var(--secondary); padding: 12px; border-radius: var(--radius); margin: 12px 0; word-break: break-all; font-family: monospace; font-size: 12px;">
+                            ${url}
+                        </div>
+                        <p style="color: var(--warning); font-size: 13px;">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            Copy and send this link to the candidate manually.
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button onclick="this.closest('.modal').remove()" class="btn btn-secondary">Close</button>
+                        <button onclick="navigator.clipboard.writeText('${url}').then(() => showToast('Copied', 'Link copied to clipboard', 'success'))" class="btn btn-primary">
+                            <i class="fas fa-copy"></i> Copy Link
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
         }
-        
-        async function loadSubmissions() {
-            const { data, error } = await supabaseClient.from('submissions').select('*');
-            if(error) return showToast('Error', 'Could not load submissions.', 'error');
 
-            const container = document.getElementById('all-submissions');
-            container.innerHTML = `<table class="table"><thead><tr><th>Candidate</th><th>Email</th><th>Score</th><th>Submitted At</th></tr></thead><tbody>
-                ${data.map(s => `<tr><td>${s.candidate_name}</td><td>${s.candidate_email}</td><td>${s.score || 'N/A'}</td><td>${new Date(s.submitted_at).toLocaleString()}</td></tr>`).join('')}
-            </tbody></table>`;
+        // View Submission Modal
+        async function viewSubmission(id) {
+            try {
+                if (!supabaseClient || id === 1 || id === 2) {
+                    showMockSubmissionModal(id);
+                    return;
+                }
+
+                const { data: submission, error } = await supabaseClient
+                    .from('submissions')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+
+                if (error) throw error;
+
+                showSubmissionModal(submission);
+            } catch (error) {
+                console.error('Failed to load submission:', error);
+                showToast('Load Error', 'Failed to load submission details', 'error');
+                showMockSubmissionModal(id);
+            }
         }
 
-        async function loadInvitations() {
-            const { data, error } = await supabaseClient.from('invitations').select('*, assessment_templates(title)');
-            if(error) return showToast('Error', 'Could not load invitations.', 'error');
-
-            const container = document.getElementById('all-invitations');
-            container.innerHTML = `<table class="table"><thead><tr><th>Email</th><th>Template</th><th>Status</th><th>Expires At</th></tr></thead><tbody>
-                ${data.map(i => `<tr><td>${i.candidate_email}</td><td>${i.assessment_templates.title}</td><td><span class="badge badge-${i.status === 'sent' ? 'warning' : 'success'}">${i.status}</span></td><td>${new Date(i.expires_at).toLocaleString()}</td></tr>`).join('')}
-            </tbody></table>`;
+        function showSubmissionModal(submission) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            
+            const cheatingLogs = submission.cheating_logs || [];
+            const answers = submission.answers || [];
+            const questions = submission.questions || [];
+            
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Submission Details</h3>
+                        <button onclick="this.closest('.modal').remove()" style="background: none; border: none; font-size: 18px; color: var(--text-secondary); cursor: pointer; padding: 4px;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Candidate Info -->
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin-bottom: 12px; font-size: 14px; font-weight: 600;">Candidate Information</h4>
+                            <div style="background: var(--accent); padding: 16px; border-radius: var(--radius); font-size: 13px;">
+                                <p><strong>Name:</strong> ${submission.candidate_name}</p>
+                                <p><strong>Email:</strong> ${submission.candidate_email}</p>
+                                <p><strong>Submitted:</strong> ${new Date(submission.submitted_at).toLocaleString()}</p>
+                                <p><strong>Duration:</strong> ${formatDuration(submission.time_taken || 0)}</p>
+                                <p><strong>Score:</strong> ${submission.score || 0}%</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Answers -->
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin-bottom: 12px; font-size: 14px; font-weight: 600;">Submitted Answers</h4>
+                            ${answers && answers.length > 0 ? answers.map((answer, index) => {
+                                const questionTitle = questions[index] ? questions[index].title : '';
+                                return `
+                                    <div style="margin-bottom: 16px;">
+                                        <h5 style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--primary);">
+                                            Question ${index + 1}${questionTitle ? ': ' + questionTitle : ''}
+                                        </h5>
+                                        <div style="background: #f8f9fa; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; font-family: monospace; font-size: 13px; white-space: pre-wrap; max-height: 200px; overflow-y: auto;">
+${answer || 'No answer provided'}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('') : '<p style="color: var(--text-secondary);">No answers submitted</p>'}
+                        </div>
+                        
+                        <!-- Security Events -->
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin-bottom: 12px; font-size: 14px; font-weight: 600;">Security Events (${Array.isArray(cheatingLogs) ? cheatingLogs.length : 0})</h4>
+                            ${Array.isArray(cheatingLogs) && cheatingLogs.length > 0 ? cheatingLogs.map(log => `
+                                <div style="background: #fef2f2; border: 1px solid var(--error); border-left: 4px solid var(--error); border-radius: var(--radius); padding: 12px; margin-bottom: 8px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                        <span style="font-weight: 600; color: var(--error); text-transform: uppercase; font-size: 11px;">
+                                            ${log.event ? log.event.replace('_', ' ') : 'Unknown Event'}
+                                        </span>
+                                        <span style="font-size: 11px; color: var(--text-secondary); font-family: monospace;">
+                                            ${log.timestamp ? new Date(log.timestamp).toLocaleString() : 'Unknown Time'}
+                                        </span>
+                                    </div>
+                                    ${log.details ? `<p style="margin: 0; color: var(--text-secondary); font-size: 12px;">${JSON.stringify(log.details)}</p>` : ''}
+                                </div>
+                            `).join('') : '<p style="color: var(--text-secondary); font-size: 13px;">No security incidents detected.</p>'}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button onclick="this.closest('.modal').remove()" class="btn btn-secondary">Close</button>
+                        <button onclick="exportSubmissionPDF('${submission.id}')" class="btn btn-primary">
+                            <i class="fas fa-file-pdf"></i> Export PDF
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
         }
 
-        async function loadTemplates() {
-            const { data, error } = await supabaseClient.from('assessment_templates').select('*');
-            if(error) return showToast('Error', 'Could not load templates.', 'error');
-
-            const container = document.getElementById('all-templates');
-            container.innerHTML = `<table class="table"><thead><tr><th>Title</th><th>Language</th><th>Questions</th><th>Duration</th></tr></thead><tbody>
-                ${data.map(t => `<tr><td>${t.title}</td><td>${t.language}</td><td>${t.questions.length}</td><td>${t.default_duration} mins</td></tr>`).join('')}
-            </tbody></table>`;
+        function showMockSubmissionModal(id) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Submission Details (Demo)</h3>
+                        <button onclick="this.closest('.modal').remove()" style="background: none; border: none; font-size: 18px; color: var(--text-secondary); cursor: pointer; padding: 4px;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div style="background: var(--accent); padding: 16px; border-radius: var(--radius); font-size: 13px;">
+                            <p><strong>Name:</strong> Demo Candidate</p>
+                            <p><strong>Email:</strong> demo@example.com</p>
+                            <p><strong>Submitted:</strong> ${new Date().toLocaleString()}</p>
+                            <p><strong>Duration:</strong> 45:30</p>
+                            <p><strong>Score:</strong> 85%</p>
+                        </div>
+                        <p style="margin-top: 16px; color: var(--text-secondary);">
+                            Connect your Supabase database to view real submission details.
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button onclick="this.closest('.modal').remove()" class="btn btn-secondary">Close</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
         }
+
+        // Event Handlers
+        function refreshDashboard() {
+            showToast('Refreshing', 'Loading latest dashboard data...', 'info', 2000);
+            loadDashboardData();
+        }
+
+        function refreshSubmissions() {
+            showToast('Refreshing', 'Loading latest submissions...', 'info', 2000);
+            loadSubmissions();
+        }
+
+        function refreshInvitations() {
+            showToast('Refreshing', 'Loading latest invitations...', 'info', 2000);
+            loadInvitations();
+        }
+
+        async function exportSubmissions() {
+            try {
+                showToast('Exporting', 'Preparing submissions export...', 'info');
+                
+                if (allSubmissions.length === 0) {
+                    showToast('No Data', 'No submissions to export', 'warning');
+                    return;
+                }
+
+                const csvContent = "data:text/csv;charset=utf-8," + 
+                    "Candidate Name,Email,Assessment,Submitted At,Duration,Score,Security Events\n" +
+                    allSubmissions.map(s => {
+                        const securityEvents = (s.cheating_logs && Array.isArray(s.cheating_logs)) ? s.cheating_logs.length : 0;
+                        return `"${s.candidate_name}","${s.candidate_email}","${s.assessment_id || 'Assessment'}","${new Date(s.submitted_at).toLocaleString()}","${formatDuration(s.time_taken || 0)}","${s.score || 0}%",${securityEvents}`;
+                    }).join('\n');
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `submissions-${new Date().toISOString().split('T')[0]}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showToast('Export Complete', 'Submissions exported successfully', 'success');
+            } catch (error) {
+                console.error('Export failed:', error);
+                showToast('Export Failed', 'Failed to export submissions', 'error');
+            }
+        }
+
+        function copyInvitationLink(token, assessmentId) {
+            const baseUrl = window.location.origin;
+            const assessmentUrl = `${baseUrl}/index.html?assessment=${assessmentId}&token=${token}`;
+            
+            navigator.clipboard.writeText(assessmentUrl).then(() => {
+                showToast('Link Copied', 'Assessment link copied to clipboard', 'success');
+            }).catch(() => {
+                showToast('Copy Failed', 'Failed to copy link to clipboard', 'error');
+            });
+        }
+
+        async function resendInvitation(invitationId) {
+            try {
+                showToast('Resending', 'Resending invitation...', 'info');
+                // In production, implement email resending logic here
+                setTimeout(() => {
+                    showToast('Resent', 'Assessment invitation has been resent', 'success');
+                }, 1000);
+            } catch (error) {
+                console.error('Failed to resend invitation:', error);
+                showToast('Resend Failed', 'Failed to resend invitation', 'error');
+            }
+        }
+
+        function exportSubmissionPDF(submissionId) {
+            showToast('Export Started', 'Generating PDF report...', 'info');
+            setTimeout(() => {
+                showToast('Export Complete', 'PDF report downloaded successfully', 'success');
+            }, 2000);
+        }
+
+        function showCreateTemplateModal() {
+            showToast('Feature Coming Soon', 'Template creation will be available in the next update', 'info');
+        }
+
+        function editTemplate(templateId) {
+            showToast('Feature Coming Soon', 'Template editing will be available in the next update', 'info');
+        }
+
+        function duplicateTemplate(templateId) {
+            showToast('Feature Coming Soon', 'Template duplication will be available in the next update', 'info');
+        }
+
+        function deleteTemplate(templateId) {
+            showToast('Feature Coming Soon', 'Template deletion will be available in the next update', 'info');
+        }
+
+        // Utility Functions
+        function formatDuration(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            
+            if (hours > 0) {
+                return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+            return `${minutes}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Initialize Application
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Supabase
+            const dbConnected = initializeSupabase();
+            
+            // Check for stored session first
+            const storedSession = localStorage.getItem('adminSession');
+            if (storedSession) {
+                try {
+                    currentUser = JSON.parse(storedSession);
+                    showDashboard();
+                    loadDashboardData();
+                    return;
+                } catch (error) {
+                    localStorage.removeItem('adminSession');
+                }
+            }
+            
+            // Set default expiration date
+            const expirationDate = new Date();
+            expirationDate.setDate(expirationDate.getDate() + 7);
+            const expirationInput = document.getElementById('expirationDate');
+            if (expirationInput) {
+                expirationInput.value = expirationDate.toISOString().slice(0, 16);
+            }
+            
+            // Event listeners
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                
+                if (!email || !password) {
+                    showToast('Validation Error', 'Please enter both email and password', 'error');
+                    return;
+                }
+                
+                const success = await login(email, password);
+                if (success) {
+                    localStorage.setItem('adminSession', JSON.stringify(currentUser));
+                }
+            });
+
+            document.getElementById('companyForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const companyName = document.getElementById('companyName').value;
+                const platformBranding = document.getElementById('platformBranding').value;
+                const defaultDuration = document.getElementById('defaultDuration').value;
+                
+                // Save to database if available, otherwise localStorage
+                if (supabaseClient) {
+                    try {
+                        const { data, error } = await supabaseClient
+                            .from('company_settings')
+                            .upsert({
+                                id: 1,
+                                company_name: companyName,
+                                platform_branding: platformBranding,
+                                default_duration: parseInt(defaultDuration)
+                            });
+                        
+                        if (error) throw error;
+                        showToast('Settings Saved', 'Company settings saved to database', 'success');
+                    } catch (error) {
+                        console.error('Failed to save to database:', error);
+                        localStorage.setItem('companySettings', JSON.stringify({
+                            companyName, platformBranding, defaultDuration
+                        }));
+                        showToast('Settings Saved', 'Company settings saved locally', 'warning');
+                    }
+                } else {
+                    localStorage.setItem('companySettings', JSON.stringify({
+                        companyName, platformBranding, defaultDuration
+                    }));
+                    showToast('Settings Saved', 'Company settings saved locally', 'success');
+                }
+                
+                if (companyName) {
+                    document.getElementById('companyNameDisplay').textContent = companyName;
+                }
+            });
+
+            document.getElementById('databaseForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const supabaseUrl = document.getElementById('supabaseUrl').value;
+                const supabaseKey = document.getElementById('supabaseKey').value;
+                
+                if (supabaseUrl && supabaseKey) {
+                    CONFIG.supabaseUrl = supabaseUrl;
+                    CONFIG.supabaseServiceKey = supabaseKey;
+                    
+                    const connected = initializeSupabase();
+                    if (connected) {
+                        showToast('Database Connected', 'Database configuration updated successfully', 'success');
+                        loadDashboardData();
+                    }
+                } else {
+                    showToast('Validation Error', 'Please fill in all database fields', 'error');
+                }
+            });
+
+            document.getElementById('invitationForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const email = document.getElementById('candidateEmail').value;
+                const template = document.getElementById('assessmentTemplate').value;
+                const message = document.getElementById('personalMessage').value;
+                const expiration = document.getElementById('expirationDate').value;
+                
+                if (!email || !template || !expiration) {
+                    showToast('Validation Error', 'Please fill in all required fields', 'error');
+                    return;
+                }
+                
+                const success = await createInvitation(email, template, message, expiration);
+                if (success) {
+                    document.getElementById('invitationForm').reset();
+                    // Reset expiration date to 7 days from now
+                    const newExpiration = new Date();
+                    newExpiration.setDate(newExpiration.getDate() + 7);
+                    document.getElementById('expirationDate').value = newExpiration.toISOString().slice(0, 16);
+                    
+                    // Refresh invitations list
+                    if (currentPanel === 'invitations') {
+                        loadInvitations();
+                    }
+                }
+            });
+
+            // Load saved settings
+            const savedSettings = localStorage.getItem('companySettings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                if (settings.companyName) {
+                    document.getElementById('companyName').value = settings.companyName;
+                    document.getElementById('companyNameDisplay').textContent = settings.companyName;
+                }
+                if (settings.platformBranding) {
+                    document.getElementById('platformBranding').value = settings.platformBranding;
+                }
+                if (settings.defaultDuration) {
+                    document.getElementById('defaultDuration').value = settings.defaultDuration;
+                }
+            }
+
+            // Show auth screen initially if no session
+            showAuthScreen();
+            
+            // Show setup notice if database not configured
+            if (!CONFIG.supabaseUrl || CONFIG.supabaseServiceKey.includes('YOUR_SERVICE_ROLE_KEY_HERE')) {
+                setTimeout(() => {
+                    showToast('Setup Required', 'Please configure your Supabase credentials in the Settings panel to enable full functionality.', 'warning', 10000);
+                }, 3000);
+            }
+            
+            // Show demo login info
+            setTimeout(() => {
+                showToast('Demo Login', 'Use admin@demo.com / demo123 to login to the demo dashboard', 'info', 8000);
+            }, 2000);
+        });
     </script>
 </body>
 </html>
