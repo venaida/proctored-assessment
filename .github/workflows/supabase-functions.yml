@@ -1,0 +1,40 @@
+name: Deploy Supabase Functions & Migrations
+
+on:
+  push:
+    branches:
+      - main   # Change if you deploy from another branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1 — Check out your repo
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2 — Install Supabase CLI
+      - name: Install Supabase CLI
+        run: npm install -g supabase
+
+      # Step 3 — Log in to Supabase
+      - name: Supabase login
+        run: supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      # Step 4 — Link project (optional if `supabase/config.toml` is present)
+      - name: Link to Supabase project
+        run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+
+      # Step 5 — Deploy Database migrations (optional)
+      - name: Deploy Database
+        run: supabase db push
+
+      # Step 6 — Deploy Edge Functions
+        # List all functions you want deployed
+      - name: Deploy Edge Functions
+        run: |
+          supabase functions deploy admin-stats
+          supabase functions deploy admin-create-invitation
+          supabase functions deploy admin-submissions
+          supabase functions deploy admin-invitations
