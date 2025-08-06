@@ -1,4 +1,1373 @@
-<!DOCTYPE html>
+<button onclick="saveCompanySettings()" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Settings
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Admin Users</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">Add Admin User</label>
+                                    <input type="email" id="newAdminEmail" class="form-input" placeholder="admin@company.com">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Full Name</label>
+                                    <input type="text" id="newAdminName" class="form-input" placeholder="Full Name">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Temporary Password</label>
+                                    <input type="password" id="newAdminPassword" class="form-input" placeholder="Temporary password">
+                                </div>
+                                <button onclick="createAdminUser()" class="btn btn-success">
+                                    <i class="fas fa-user-plus"></i> Add Admin
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Template Modal -->
+    <div id="createTemplateModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Question Template</h3>
+                <button onclick="closeModal('createTemplateModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Question Title</label>
+                    <input type="text" id="templateTitle" class="form-input" placeholder="Array Manipulation">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea id="templateDescription" class="form-textarea" placeholder="Write a function that..."></textarea>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Difficulty</label>
+                        <select id="templateDifficulty" class="form-select">
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Language</label>
+                        <select id="templateLanguage" class="form-select">
+                            <option value="javascript">JavaScript</option>
+                            <option value="python">Python</option>
+                            <option value="java">Java</option>
+                            <option value="cpp">C++</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Starter Code</label>
+                    <textarea id="templateStarter" class="form-textarea" style="min-height: 120px;" placeholder="function solutionFunction() {&#10;    // Your code here&#10;}"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Test Cases (JSON)</label>
+                    <textarea id="templateTestCases" class="form-textarea" style="min-height: 100px;" placeholder='[{"input": "[1,2,3]", "expected": "6", "description": "Sum of array"}]'></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('createTemplateModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createTemplate()">
+                    <i class="fas fa-save"></i> Create Template
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Assessment Modal -->
+    <div id="createAssessmentModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Assessment</h3>
+                <button onclick="closeModal('createAssessmentModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Assessment Title</label>
+                    <input type="text" id="assessmentTitle" class="form-input" placeholder="JavaScript Developer Assessment">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea id="assessmentDescription" class="form-textarea" placeholder="Test your programming skills..."></textarea>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Duration (minutes)</label>
+                        <input type="number" id="assessmentDuration" class="form-input" value="60" min="5" max="300">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Language</label>
+                        <select id="assessmentLanguage" class="form-select">
+                            <option value="javascript">JavaScript</option>
+                            <option value="python">Python</option>
+                            <option value="java">Java</option>
+                            <option value="cpp">C++</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Select Questions</label>
+                    <div id="questionSelection" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px;">
+                        <p>Loading available questions...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('createAssessmentModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createAssessment()">
+                    <i class="fas fa-save"></i> Create Assessment
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Invitation Modal -->
+    <div id="createInvitationModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Assessment Invitation</h3>
+                <button onclick="closeModal('createInvitationModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Candidate Email</label>
+                    <input type="email" id="candidateEmail" class="form-input" placeholder="candidate@company.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Assessment</label>
+                    <select id="invitationAssessment" class="form-select" required>
+                        <option value="">Select an assessment...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Duration Override (minutes)</label>
+                    <input type="number" id="invitationDuration" class="form-input" placeholder="Leave empty to use default">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Expiration Date</label>
+                    <input type="datetime-local" id="invitationExpiry" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Personal Message (Optional)</label>
+                    <textarea id="personalMessage" class="form-textarea" placeholder="Good luck with the assessment!"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('createInvitationModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createInvitation()">
+                    <i class="fas fa-paper-plane"></i> Send Invitation
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Submission Modal -->
+    <div id="viewSubmissionModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Submission Details</h3>
+                <button onclick="closeModal('viewSubmissionModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="submissionDetails">
+                    <!-- Submission details will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('viewSubmissionModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // ENVIRONMENT VARIABLES - These should be set via build process
+        // For Vite: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+        // For Create React App: REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY
+        // For Next.js: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
+        
+        const CONFIG = {
+            supabaseUrl: import.meta?.env?.VITE_SUPABASE_URL || 
+                        process.env?.REACT_APP_SUPABASE_URL || 
+                        process.env?.NEXT_PUBLIC_SUPABASE_URL || 
+                        "https://ytoidmelmialrjfqyhet.supabase.co", // Fallback for demo
+            supabaseAnonKey: import.meta?.env?.VITE_SUPABASE_ANON_KEY || 
+                            process.env?.REACT_APP_SUPABASE_ANON_KEY || 
+                            process.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY || 
+                            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0b2lkbWVsbWlhbHJqZnF5aGV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzMTg3NzYsImV4cCI6MjA2OTg5NDc3Nn0.4D_ohY9wqeBb8Rod8dlhrn5Jjl10QNzU-AeCDHUixv4" // Fallback for demo
+        };
+
+        // Show warning if using fallback credentials
+        if (CONFIG.supabaseUrl.includes('ytoidmelmialrjfqyhet')) {
+            document.getElementById('configWarning').classList.remove('hidden');
+        }
+
+        // Global State
+        let currentUser = null;
+        let currentPanel = 'dashboard';
+        let supabaseClient = null;
+        let selectedQuestions = [];
+
+        // Initialize Supabase client
+        if (typeof supabase !== 'undefined' && CONFIG.supabaseUrl && CONFIG.supabaseAnonKey) {
+            try {
+                supabaseClient = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
+                updateConnectionStatus(true);
+                console.log('✅ Supabase initialized successfully');
+            } catch (error) {
+                console.error('❌ Failed to initialize Supabase:', error);
+                updateConnectionStatus(false);
+            }
+        } else {
+            updateConnectionStatus(false);
+        }
+
+        // Toast System
+        function showToast(title, message, type = 'success', duration = 5000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            toast.innerHTML = `
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${title}</div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">${message}</div>
+                </div>
+                <button onclick="this.parentElement.remove()" style="background: none; border: none; cursor: pointer; padding: 4px; color: var(--text-secondary);">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+            container.appendChild(toast);
+
+            if (duration > 0) {
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.remove();
+                    }
+                }, duration);
+            }
+        }
+
+        // Connection Status
+        function updateConnectionStatus(connected) {
+            const statusEl = document.getElementById('connectionStatus');
+            if (connected) {
+                statusEl.className = 'connection-status connected';
+                statusEl.innerHTML = '<i class="fas fa-check-circle"></i> Connected';
+            } else {
+                statusEl.className = 'connection-status disconnected';
+                statusEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Disconnected';
+            }
+        }
+
+        // Authentication
+        async function login(email, password) {
+            if (!supabaseClient) {
+                showToast('Connection Error', 'Database connection not available', 'error');
+                return false;
+            }
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) {
+                    throw error;
+                }
+
+                // Check if user is admin
+                const { data: adminUser, error: adminError } = await supabaseClient
+                    .from('admin_users')
+                    .select('*')
+                    .eq('email', email)
+                    .single();
+
+                if (adminError || !adminUser) {
+                    throw new Error('Admin privileges required');
+                }
+
+                currentUser = {
+                    ...data.user,
+                    adminData: adminUser
+                };
+
+                // Update last login
+                await supabaseClient
+                    .from('admin_users')
+                    .update({ last_login: new Date().toISOString() })
+                    .eq('email', email);
+
+                return true;
+            } catch (error) {
+                console.error('Login error:', error);
+                showToast('Login Failed', error.message || 'Invalid credentials', 'error');
+                return false;
+            }
+        }
+
+        // Panel Management
+        function showPanel(panelName) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelectorAll('.panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+
+            event.target.classList.add('active');
+            document.getElementById(`${panelName}-panel`).classList.add('active');
+            currentPanel = panelName;
+
+            // Load panel data
+            switch (panelName) {
+                case 'dashboard':
+                    loadDashboardStats();
+                    break;
+                case 'templates':
+                    loadTemplates();
+                    break;
+                case 'assessments':
+                    loadAssessments();
+                    break;
+                case 'submissions':
+                    loadSubmissions();
+                    break;
+                case 'invitations':
+                    loadInvitations();
+                    break;
+                case 'settings':
+                    loadSettings();
+                    break;
+            }
+        }
+
+        // Dashboard Functions
+        async function loadDashboardStats() {
+            if (!supabaseClient) {
+                showToast('Connection Error', 'Database connection not available', 'error');
+                return;
+            }
+
+            try {
+                // Get submissions count and calculate stats
+                const { data: submissions, error: submissionsError } = await supabaseClient
+                    .from('submissions')
+                    .select('*');
+
+                if (submissionsError) throw submissionsError;
+
+                // Get active invitations count
+                const { data: invitations, error: invitationsError } = await supabaseClient
+                    .from('invitations')
+                    .select('*')
+                    .eq('status', 'sent');
+
+                if (invitationsError) throw invitationsError;
+
+                // Calculate stats
+                let securityIncidents = 0;
+                let totalScore = 0;
+                submissions?.forEach(sub => {
+                    if (sub.cheating_logs && Array.isArray(sub.cheating_logs)) {
+                        securityIncidents += sub.cheating_logs.length;
+                    }
+                    totalScore += sub.score || 0;
+                });
+
+                const averageScore = submissions?.length > 0 ? Math.round(totalScore / submissions.length) : 0;
+
+                // Update UI
+                document.getElementById('totalSubmissions').textContent = submissions?.length || 0;
+                document.getElementById('activeInvitations').textContent = invitations?.length || 0;
+                document.getElementById('securityIncidents').textContent = securityIncidents;
+                document.getElementById('averageScore').textContent = `${averageScore}%`;
+
+                // Get recent submissions
+                const recentSubmissions = submissions?.slice(0, 5).sort((a, b) => 
+                    new Date(b.submitted_at) - new Date(a.submitted_at)
+                ) || [];
+
+                updateRecentSubmissionsTable(recentSubmissions);
+
+            } catch (error) {
+                console.error('Failed to load dashboard stats:', error);
+                showToast('Error', 'Failed to load dashboard statistics', 'error');
+                
+                // Show error state in stats
+                document.getElementById('totalSubmissions').textContent = '-';
+                document.getElementById('activeInvitations').textContent = '-';
+                document.getElementById('securityIncidents').textContent = '-';
+                document.getElementById('averageScore').textContent = '-%';
+            }
+        }
+
+        function updateRecentSubmissionsTable(submissions) {
+            const container = document.getElementById('recentSubmissionsTable');
+            
+            if (!submissions || submissions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-file-alt"></i>
+                        <p>No submissions yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Candidate</th>
+                            <th>Assessment</th>
+                            <th>Score</th>
+                            <th>Submitted</th>
+                            <th>Security Events</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${submissions.map(sub => `
+                            <tr>
+                                <td>
+                                    <div style="font-weight: 500;">${sub.candidate_name}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">${sub.candidate_email}</div>
+                                </td>
+                                <td>${sub.assessment_id || 'Default Assessment'}</td>
+                                <td>
+                                    <span class="badge ${sub.score >= 70 ? 'badge-success' : sub.score >= 50 ? 'badge-warning' : 'badge-error'}">
+                                        ${sub.score || 0}%
+                                    </span>
+                                </td>
+                                <td>${new Date(sub.submitted_at).toLocaleDateString()}</td>
+                                <td>
+                                    <span class="badge ${(sub.cheating_logs?.length || 0) > 0 ? 'badge-error' : 'badge-success'}">
+                                        ${sub.cheating_logs?.length || 0}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-secondary btn-sm" onclick="viewSubmission('${sub.id}')">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Template Functions
+        async function loadTemplates() {
+            if (!supabaseClient) return;
+
+            try {
+                const { data: templates, error } = await supabaseClient
+                    .from('questions')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                updateTemplatesList(templates || []);
+            } catch (error) {
+                console.error('Failed to load templates:', error);
+                showToast('Error', 'Failed to load question templates', 'error');
+            }
+        }
+
+        function updateTemplatesList(templates) {
+            const container = document.getElementById('templatesList');
+            
+            if (templates.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-question-circle"></i>
+                        <p>No question templates created yet</p>
+                        <button class="btn btn-primary" onclick="showCreateTemplateModal()">
+                            <i class="fas fa-plus"></i> Create Your First Template
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Language</th>
+                            <th>Difficulty</th>
+                            <th>Test Cases</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${templates.map(template => `
+                            <tr>
+                                <td>
+                                    <div style="font-weight: 500;">${template.title}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">${template.description?.substring(0, 50)}...</div>
+                                </td>
+                                <td><span class="badge badge-secondary">${template.language}</span></td>
+                                <td><span class="badge ${getDifficultyBadgeClass(template.difficulty)}">${template.difficulty}</span></td>
+                                <td>${template.test_cases?.length || 0}</td>
+                                <td>${new Date(template.created_at).toLocaleDateString()}</td>
+                                <td>
+                                    <button class="btn btn-secondary btn-sm" onclick="editTemplate('${template.id}')">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" onclick="deleteTemplate('${template.id}')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function getDifficultyBadgeClass(difficulty) {
+            switch (difficulty?.toLowerCase()) {
+                case 'easy': return 'badge-success';
+                case 'medium': return 'badge-warning';
+                case 'hard': return 'badge-error';
+                default: return 'badge-secondary';
+            }
+        }
+
+        // Assessment Functions
+        async function loadAssessments() {
+            if (!supabaseClient) return;
+
+            try {
+                const { data: assessments, error } = await supabaseClient
+                    .from('assessments')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                updateAssessmentsList(assessments || []);
+            } catch (error) {
+                console.error('Failed to load assessments:', error);
+                showToast('Error', 'Failed to load assessments', 'error');
+            }
+        }
+
+        function updateAssessmentsList(assessments) {
+            const container = document.getElementById('assessmentsList');
+            
+            if (assessments.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-tasks"></i>
+                        <p>No assessments created yet</p>
+                        <button class="btn btn-primary" onclick="showCreateAssessmentModal()">
+                            <i class="fas fa-plus"></i> Create Your First Assessment
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = assessments.map(assessment => `
+                <div class="assessment-item">
+                    <h4>${assessment.title}</h4>
+                    <p>${assessment.description}</p>
+                    <div class="assessment-meta">
+                        <span><i class="fas fa-clock"></i> ${assessment.duration} minutes</span>
+                        <span><i class="fas fa-code"></i> ${assessment.language}</span>
+                        <span><i class="fas fa-signal"></i> ${assessment.difficulty}</span>
+                        <span><i class="fas fa-question-circle"></i> ${assessment.questions?.length || 0} questions</span>
+                        <span><i class="fas fa-calendar"></i> Created ${new Date(assessment.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div class="assessment-actions">
+                        <button class="btn btn-secondary btn-sm" onclick="editAssessment('${assessment.id}')">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="createInvitationForAssessment('${assessment.id}')">
+                            <i class="fas fa-paper-plane"></i> Send Invitation
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteAssessment('${assessment.id}')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Submissions Functions
+        async function loadSubmissions() {
+            if (!supabaseClient) return;
+
+            try {
+                const { data: submissions, error } = await supabaseClient
+                    .from('submissions')
+                    .select('*')
+                    .order('submitted_at', { ascending: false });
+
+                if (error) throw error;
+                updateSubmissionsTable(submissions || []);
+            } catch (error) {
+                console.error('Failed to load submissions:', error);
+                showToast('Error', 'Failed to load submissions', 'error');
+            }
+        }
+
+        function updateSubmissionsTable(submissions) {
+            const container = document.getElementById('submissionsTable');
+            
+            if (submissions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-file-alt"></i>
+                        <p>No submissions yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Candidate</th>
+                            <th>Assessment</th>
+                            <th>Score</th>
+                            <th>Time Taken</th>
+                            <th>Security Events</th>
+                            <th>Submitted</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${submissions.map(sub => `
+                            <tr>
+                                <td>
+                                    <div style="font-weight: 500;">${sub.candidate_name}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">${sub.candidate_email}</div>
+                                </td>
+                                <td>${sub.assessment_id || 'Default Assessment'}</td>
+                                <td>
+                                    <span class="badge ${sub.score >= 70 ? 'badge-success' : sub.score >= 50 ? 'badge-warning' : 'badge-error'}">
+                                        ${sub.score || 0}%
+                                    </span>
+                                </td>
+                                <td>${Math.round((sub.time_taken || 0) / 60)} min</td>
+                                <td>
+                                    <span class="badge ${(sub.cheating_logs?.length || 0) > 0 ? 'badge-error' : 'badge-success'}">
+                                        ${sub.cheating_logs?.length || 0}
+                                    </span>
+                                </td>
+                                <td>${new Date(sub.submitted_at).toLocaleString()}</td>
+                                <td>
+                                    <button class="btn btn-secondary btn-sm" onclick="viewSubmission('${sub.id}')">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Invitations Functions
+        async function loadInvitations() {
+            if (!supabaseClient) return;
+
+            try {
+                const { data: invitations, error } = await supabaseClient
+                    .from('invitations')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                updateInvitationsTable(invitations || []);
+            } catch (error) {
+                console.error('Failed to load invitations:', error);
+                showToast('Error', 'Failed to load invitations', 'error');
+            }
+        }
+
+        function updateInvitationsTable(invitations) {
+            const container = document.getElementById('invitationsTable');
+            
+            if (invitations.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-envelope"></i>
+                        <p>No invitations sent yet</p>
+                        <button class="btn btn-primary" onclick="showCreateInvitationModal()">
+                            <i class="fas fa-plus"></i> Send Your First Invitation
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Candidate Email</th>
+                            <th>Assessment</th>
+                            <th>Status</th>
+                            <th>Sent</th>
+                            <th>Expires</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${invitations.map(inv => `
+                            <tr>
+                                <td>${inv.candidate_email}</td>
+                                <td>${inv.assessment_id}</td>
+                                <td>
+                                    <span class="badge ${getStatusBadgeClass(inv.status)}">
+                                        ${inv.status}
+                                    </span>
+                                </td>
+                                <td>${new Date(inv.sent_at).toLocaleDateString()}</td>
+                                <td>${new Date(inv.expires_at).toLocaleDateString()}</td>
+                                <td>
+                                    <button class="btn btn-secondary btn-sm" onclick="copyInvitationLink('${inv.invitation_token}', '${inv.assessment_id}')">
+                                        <i class="fas fa-copy"></i> Copy Link
+                                    </button>
+                                    ${inv.status === 'sent' ? `
+                                        <button class="btn btn-danger btn-sm" onclick="revokeInvitation('${inv.id}')">
+                                            <i class="fas fa-ban"></i> Revoke
+                                        </button>
+                                    ` : ''}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function getStatusBadgeClass(status) {
+            switch (status) {
+                case 'sent': return 'badge-warning';
+                case 'completed': return 'badge-success';
+                case 'expired': return 'badge-error';
+                case 'revoked': return 'badge-secondary';
+                default: return 'badge-secondary';
+            }
+        }
+
+        // Settings Functions
+        async function loadSettings() {
+            if (!supabaseClient) return;
+
+            try {
+                const { data: settings, error } = await supabaseClient
+                    .from('company_settings')
+                    .select('*')
+                    .single();
+
+                if (settings) {
+                    document.getElementById('companyName').value = settings.company_name || '';
+                    document.getElementById('platformBranding').value = settings.platform_branding || 'TechAssess Pro';
+                    document.getElementById('defaultDuration').value = settings.default_duration || 60;
+                }
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+            }
+        }
+
+        // Modal Functions
+        function showCreateTemplateModal() {
+            document.getElementById('createTemplateModal').classList.remove('hidden');
+        }
+
+        async function showCreateAssessmentModal() {
+            // Load available question templates
+            if (supabaseClient) {
+                try {
+                    const { data: templates } = await supabaseClient
+                        .from('questions')
+                        .select('*')
+                        .order('title', { ascending: true });
+
+                    const container = document.getElementById('questionSelection');
+                    if (templates && templates.length > 0) {
+                        container.innerHTML = templates.map(template => `
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" value="${template.id}" onchange="toggleQuestionSelection('${template.id}')">
+                                    <div>
+                                        <div style="font-weight: 500;">${template.title}</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">${template.language} • ${template.difficulty}</div>
+                                    </div>
+                                </label>
+                            </div>
+                        `).join('');
+                    } else {
+                        container.innerHTML = '<p style="color: var(--text-secondary);">No question templates available. Create some first!</p>';
+                    }
+                } catch (error) {
+                    console.error('Failed to load templates for assessment:', error);
+                    document.getElementById('questionSelection').innerHTML = '<p style="color: var(--error);">Failed to load questions</p>';
+                }
+            }
+
+            document.getElementById('createAssessmentModal').classList.remove('hidden');
+        }
+
+        async function showCreateInvitationModal() {
+            // Load available assessments
+            if (supabaseClient) {
+                try {
+                    const { data: assessments } = await supabaseClient
+                        .from('assessments')
+                        .select('id, title')
+                        .eq('is_active', true);
+
+                    const select = document.getElementById('invitationAssessment');
+                    select.innerHTML = '<option value="">Select an assessment...</option>';
+                    
+                    if (assessments) {
+                        assessments.forEach(assessment => {
+                            select.innerHTML += `<option value="${assessment.id}">${assessment.title}</option>`;
+                        });
+                    }
+
+                    // Set default expiry to 7 days from now
+                    const expiry = new Date();
+                    expiry.setDate(expiry.getDate() + 7);
+                    document.getElementById('invitationExpiry').value = expiry.toISOString().slice(0, 16);
+
+                    document.getElementById('createInvitationModal').classList.remove('hidden');
+                } catch (error) {
+                    console.error('Failed to load assessments for invitation:', error);
+                    showToast('Error', 'Failed to load assessments', 'error');
+                }
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            
+            // Clear forms when closing
+            if (modalId === 'createTemplateModal') {
+                document.getElementById('templateTitle').value = '';
+                document.getElementById('templateDescription').value = '';
+                document.getElementById('templateStarter').value = '';
+                document.getElementById('templateTestCases').value = '';
+            } else if (modalId === 'createAssessmentModal') {
+                document.getElementById('assessmentTitle').value = '';
+                document.getElementById('assessmentDescription').value = '';
+                selectedQuestions = [];
+            } else if (modalId === 'createInvitationModal') {
+                document.getElementById('candidateEmail').value = '';
+                document.getElementById('invitationAssessment').value = '';
+                document.getElementById('invitationDuration').value = '';
+                document.getElementById('personalMessage').value = '';
+            }
+        }
+
+        function toggleQuestionSelection(questionId) {
+            if (selectedQuestions.includes(questionId)) {
+                selectedQuestions = selectedQuestions.filter(id => id !== questionId);
+            } else {
+                selectedQuestions.push(questionId);
+            }
+        }
+
+        // CRUD Operations
+        async function createTemplate() {
+            const title = document.getElementById('templateTitle').value.trim();
+            const description = document.getElementById('templateDescription').value.trim();
+            const difficulty = document.getElementById('templateDifficulty').value;
+            const language = document.getElementById('templateLanguage').value;
+            const starter = document.getElementById('templateStarter').value.trim();
+            const testCasesText = document.getElementById('templateTestCases').value.trim();
+
+            if (!title || !description || !starter) {
+                showToast('Validation Error', 'Please fill in all required fields', 'error');
+                return;
+            }
+
+            let testCases = [];
+            if (testCasesText) {
+                try {
+                    testCases = JSON.parse(testCasesText);
+                    if (!Array.isArray(testCases)) {
+                        throw new Error('Test cases must be an array');
+                    }
+                } catch (error) {
+                    showToast('Invalid JSON', 'Please provide valid JSON for test cases', 'error');
+                    return;
+                }
+            }
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('questions')
+                    .insert({
+                        title,
+                        description,
+                        difficulty,
+                        language,
+                        starter_code: starter,
+                        test_cases: testCases
+                    })
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                showToast('Success', 'Question template created successfully', 'success');
+                closeModal('createTemplateModal');
+                
+                if (currentPanel === 'templates') {
+                    loadTemplates();
+                }
+            } catch (error) {
+                console.error('Failed to create template:', error);
+                showToast('Error', 'Failed to create template', 'error');
+            }
+        }
+
+        async function createAssessment() {
+            const title = document.getElementById('assessmentTitle').value.trim();
+            const description = document.getElementById('assessmentDescription').value.trim();
+            const duration = parseInt(document.getElementById('assessmentDuration').value);
+            const language = document.getElementById('assessmentLanguage').value;
+
+            if (!title || !description || selectedQuestions.length === 0) {
+                showToast('Validation Error', 'Please fill in all required fields and select at least one question', 'error');
+                return;
+            }
+
+            try {
+                // Get selected questions
+                const { data: questions, error: questionsError } = await supabaseClient
+                    .from('questions')
+                    .select('*')
+                    .in('id', selectedQuestions);
+
+                if (questionsError) throw questionsError;
+
+                // Create assessment
+                const { data, error } = await supabaseClient
+                    .from('assessments')
+                    .insert({
+                        title,
+                        description,
+                        duration,
+                        language,
+                        questions: questions,
+                        difficulty: 'Mixed',
+                        created_by: currentUser.id
+                    })
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                showToast('Success', 'Assessment created successfully', 'success');
+                closeModal('createAssessmentModal');
+                
+                if (currentPanel === 'assessments') {
+                    loadAssessments();
+                }
+            } catch (error) {
+                console.error('Failed to create assessment:', error);
+                showToast('Error', 'Failed to create assessment', 'error');
+            }
+        }
+
+        async function createInvitation() {
+            const candidateEmail = document.getElementById('candidateEmail').value.trim();
+            const assessmentId = document.getElementById('invitationAssessment').value;
+            const duration = parseInt(document.getElementById('invitationDuration').value) || null;
+            const expiresAt = document.getElementById('invitationExpiry').value;
+            const personalMessage = document.getElementById('personalMessage').value.trim();
+
+            if (!candidateEmail || !assessmentId || !expiresAt) {
+                showToast('Validation Error', 'Please fill in all required fields', 'error');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('invitations')
+                    .insert({
+                        candidate_email: candidateEmail,
+                        assessment_id: assessmentId,
+                        duration: duration,
+                        expires_at: expiresAt,
+                        personal_message: personalMessage,
+                        created_by: currentUser.id
+                    })
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                showToast('Success', 'Invitation created successfully', 'success');
+                closeModal('createInvitationModal');
+                
+                if (currentPanel === 'invitations') {
+                    loadInvitations();
+                }
+
+                // Show invitation link
+                const invitationUrl = `${window.location.origin}/index.html?assessment=${assessmentId}&token=${data.invitation_token}`;
+                copyToClipboard(invitationUrl);
+                showToast('Link Copied', 'Invitation link copied to clipboard', 'info');
+            } catch (error) {
+                console.error('Failed to create invitation:', error);
+                showToast('Error', 'Failed to create invitation', 'error');
+            }
+        }
+
+        async function viewSubmission(submissionId) {
+            if (!supabaseClient) return;
+
+            try {
+                const { data: submission, error } = await supabaseClient
+                    .from('submissions')
+                    .select('*')
+                    .eq('id', submissionId)
+                    .single();
+
+                if (error) throw error;
+
+                const detailsContainer = document.getElementById('submissionDetails');
+                detailsContainer.innerHTML = `
+                    <div class="grid-2">
+                        <div>
+                            <h4>Candidate Information</h4>
+                            <p><strong>Name:</strong> ${submission.candidate_name}</p>
+                            <p><strong>Email:</strong> ${submission.candidate_email}</p>
+                            <p><strong>Score:</strong> ${submission.score || 0}%</p>
+                            <p><strong>Time Taken:</strong> ${Math.round((submission.time_taken || 0) / 60)} minutes</p>
+                            <p><strong>Submitted:</strong> ${new Date(submission.submitted_at).toLocaleString()}</p>
+                        </div>
+                        <div>
+                            <h4>Security Summary</h4>
+                            <p><strong>Security Events:</strong> ${submission.cheating_logs?.length || 0}</p>
+                            ${submission.cheating_logs?.length > 0 ? `
+                                <div style="margin-top: 12px;">
+                                    <strong>Events:</strong>
+                                    <ul style="margin-top: 8px; padding-left: 20px; font-size: 13px;">
+                                        ${submission.cheating_logs.map(log => `
+                                            <li>${log.event.replace(/_/g, ' ')} - ${new Date(log.timestamp).toLocaleTimeString()}</li>
+                                        `).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 24px;">
+                        <h4>Questions & Answers</h4>
+                        ${submission.questions?.map((question, index) => `
+                            <div style="margin-bottom: 24px; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
+                                <h5>${question.title || `Question ${index + 1}`}</h5>
+                                <p style="color: var(--text-secondary); margin-bottom: 12px;">${question.description}</p>
+                                <strong>Answer:</strong>
+                                <div class="code-preview">${submission.answers[index] || 'No answer provided'}</div>
+                            </div>
+                        `).join('') || '<p>No questions data available</p>'}
+                    </div>
+                `;
+
+                document.getElementById('viewSubmissionModal').classList.remove('hidden');
+            } catch (error) {
+                console.error('Failed to load submission:', error);
+                showToast('Error', 'Failed to load submission details', 'error');
+            }
+        }
+
+        async function copyInvitationLink(token, assessmentId) {
+            const invitationUrl = `${window.location.origin}/index.html?assessment=${assessmentId}&token=${token}`;
+            copyToClipboard(invitationUrl);
+            showToast('Link Copied', 'Invitation link copied to clipboard', 'success');
+        }
+
+        async function saveCompanySettings() {
+            const companyName = document.getElementById('companyName').value.trim();
+            const platformBranding = document.getElementById('platformBranding').value.trim();
+            const defaultDuration = parseInt(document.getElementById('defaultDuration').value);
+
+            try {
+                const { error } = await supabaseClient
+                    .from('company_settings')
+                    .upsert({
+                        id: currentUser.adminData.id,
+                        company_name: companyName,
+                        platform_branding: platformBranding,
+                        default_duration: defaultDuration,
+                        updated_by: currentUser.id
+                    });
+
+                if (error) throw error;
+
+                showToast('Success', 'Company settings saved successfully', 'success');
+            } catch (error) {
+                console.error('Failed to save settings:', error);
+                showToast('Error', 'Failed to save settings', 'error');
+            }
+        }
+
+        async function createAdminUser() {
+            const email = document.getElementById('newAdminEmail').value.trim();
+            const fullName = document.getElementById('newAdminName').value.trim();
+            const password = document.getElementById('newAdminPassword').value;
+
+            if (!email || !fullName || !password) {
+                showToast('Validation Error', 'Please fill in all fields', 'error');
+                return;
+            }
+
+            try {
+                // First create auth user
+                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+                    email: email,
+                    password: password
+                });
+
+                if (authError) throw authError;
+
+                // Then create admin user record
+                const { error: adminError } = await supabaseClient
+                    .from('admin_users')
+                    .insert({
+                        user_id: authData.user.id,
+                        email: email,
+                        full_name: fullName,
+                        created_by: currentUser.id
+                    });
+
+                if (adminError) throw adminError;
+
+                showToast('Success', 'Admin user created successfully', 'success');
+                
+                // Clear form
+                document.getElementById('newAdminEmail').value = '';
+                document.getElementById('newAdminName').value = '';
+                document.getElementById('newAdminPassword').value = '';
+            } catch (error) {
+                console.error('Failed to create admin user:', error);
+                showToast('Error', 'Failed to create admin user: ' + error.message, 'error');
+            }
+        }
+
+        // Utility Functions
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).catch(err => {
+                console.error('Failed to copy to clipboard:', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+            });
+        }
+
+        function createInvitationForAssessment(assessmentId) {
+            showCreateInvitationModal();
+            // Pre-select the assessment
+            setTimeout(() => {
+                document.getElementById('invitationAssessment').value = assessmentId;
+            }, 100);
+        }
+
+        async function deleteTemplate(templateId) {
+            if (!confirm('Are you sure you want to delete this question template? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient
+                    .from('questions')
+                    .delete()
+                    .eq('id', templateId);
+
+                if (error) throw error;
+
+                showToast('Success', 'Question template deleted successfully', 'success');
+                loadTemplates();
+            } catch (error) {
+                console.error('Failed to delete template:', error);
+                showToast('Error', 'Failed to delete template', 'error');
+            }
+        }
+
+        async function deleteAssessment(assessmentId) {
+            if (!confirm('Are you sure you want to delete this assessment? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient
+                    .from('assessments')
+                    .delete()
+                    .eq('id', assessmentId);
+
+                if (error) throw error;
+
+                showToast('Success', 'Assessment deleted successfully', 'success');
+                loadAssessments();
+            } catch (error) {
+                console.error('Failed to delete assessment:', error);
+                showToast('Error', 'Failed to delete assessment', 'error');
+            }
+        }
+
+        async function revokeInvitation(invitationId) {
+            if (!confirm('Are you sure you want to revoke this invitation?')) {
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient
+                    .from('invitations')
+                    .update({ status: 'revoked' })
+                    .eq('id', invitationId);
+
+                if (error) throw error;
+
+                showToast('Success', 'Invitation revoked successfully', 'success');
+                loadInvitations();
+            } catch (error) {
+                console.error('Failed to revoke invitation:', error);
+                showToast('Error', 'Failed to revoke invitation', 'error');
+            }
+        }
+
+        function editTemplate(templateId) {
+            showToast('Info', 'Template editing feature coming soon!', 'info');
+        }
+
+        function editAssessment(assessmentId) {
+            showToast('Info', 'Assessment editing feature coming soon!', 'info');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                if (supabaseClient) {
+                    supabaseClient.auth.signOut();
+                }
+                
+                currentUser = null;
+                document.getElementById('authScreen').classList.remove('hidden');
+                document.getElementById('dashboardScreen').classList.add('hidden');
+                
+                // Clear form
+                document.getElementById('loginEmail').value = '';
+                document.getElementById('loginPassword').value = '';
+                
+                showToast('Logged Out', 'You have been logged out successfully', 'info');
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showToast('Validation Error', 'Please fill in all fields', 'error');
+                return;
+            }
+
+            const loginBtn = document.getElementById('loginBtn');
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
+
+            const success = await login(email, password);
+            
+            if (success) {
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('dashboardScreen').classList.remove('hidden');
+                document.getElementById('currentUserEmail').textContent = currentUser.email;
+                
+                showToast('Login Successful', 'Welcome to the admin dashboard', 'success');
+                loadDashboardStats();
+            }
+
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+        });
+
+        // Handle modal closing with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal:not(.hidden)').forEach(modal => {
+                    modal.classList.add('hidden');
+                });
+            }
+        });
+
+        // Close modals when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.add('hidden');
+            }
+        });
+
+        // Auto-refresh connection status
+        setInterval(() => {
+            if (supabaseClient) {
+                supabaseClient.from('admin_users').select('count', { count: 'exact', head: true })
+                    .then(() => updateConnectionStatus(true))
+                    .catch(() => updateConnectionStatus(false));
+            }
+        }, 30000); // Check every 30 seconds
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!supabaseClient) {
+                showToast('Configuration Required', 'Database connection not configured properly.', 'warning', 0);
+            }
+        });
+
+        // Handle session state changes
+        if (supabaseClient) {
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_OUT') {
+                    currentUser = null;
+                    document.getElementById('authScreen').classList.remove('hidden');
+                    document.getElementById('dashboardScreen').classList.add('hidden');
+                }
+            });
+        }
+    </script>
+</body>
+</html><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -123,6 +1492,25 @@
             color: var(--text-secondary);
         }
 
+        .user-info {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px;
+            margin-top: 12px;
+            font-size: 13px;
+        }
+
+        .user-info .user-email {
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .user-info .user-role {
+            color: var(--success);
+            font-weight: 500;
+        }
+
         .sidebar-nav {
             flex: 1;
             padding: 16px 0;
@@ -143,12 +1531,18 @@
             font-size: 14px;
             font-weight: 500;
             font-family: inherit;
+            text-align: left;
         }
 
         .nav-item:hover,
         .nav-item.active {
             background: var(--secondary);
             color: var(--primary);
+        }
+
+        .nav-item.logout {
+            margin-top: auto;
+            color: var(--error);
         }
 
         .main-content {
@@ -188,6 +1582,9 @@
 
         .page-header {
             margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .page-header h2 {
@@ -339,8 +1736,9 @@
         }
 
         .form-textarea {
-            min-height: 80px;
+            min-height: 120px;
             resize: vertical;
+            font-family: 'Monaco', 'Consolas', monospace;
         }
 
         .btn {
@@ -359,13 +1757,18 @@
             font-family: inherit;
         }
 
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .btn-primary {
             background: var(--primary);
             color: white;
             border-color: var(--primary);
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             background: var(--primary-hover);
             border-color: var(--primary-hover);
         }
@@ -378,6 +1781,26 @@
 
         .btn-secondary:hover {
             background: var(--secondary);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .btn-success:hover {
+            background: #16a34a;
+        }
+
+        .btn-danger {
+            background: var(--error);
+            color: white;
+            border-color: var(--error);
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
         }
 
         .btn-sm {
@@ -469,7 +1892,7 @@
         .modal-content {
             background: white;
             border-radius: var(--radius);
-            max-width: 800px;
+            max-width: 900px;
             width: 90%;
             max-height: 90vh;
             overflow-y: auto;
@@ -485,6 +1908,14 @@
             background: var(--secondary);
         }
 
+        .modal-header button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            color: var(--text-secondary);
+        }
+
         .modal-body {
             padding: 20px;
         }
@@ -496,6 +1927,120 @@
             justify-content: flex-end;
             gap: 12px;
             background: var(--secondary);
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .assessment-item {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            background: white;
+            margin-bottom: 16px;
+        }
+
+        .assessment-item h4 {
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        .assessment-item p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .assessment-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .assessment-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .connection-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 1000;
+        }
+
+        .connection-status.connected {
+            background: var(--success);
+            color: white;
+        }
+
+        .connection-status.disconnected {
+            background: var(--error);
+            color: white;
+        }
+
+        .code-preview {
+            background: #f8f9fa;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .config-warning {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .config-warning i {
+            color: #d97706;
+            font-size: 20px;
+        }
+
+        .config-warning-content h4 {
+            color: #92400e;
+            margin-bottom: 4px;
+        }
+
+        .config-warning-content p {
+            color: #92400e;
+            font-size: 14px;
         }
 
         @media (max-width: 768px) {
@@ -515,11 +2060,27 @@
             .stats-grid {
                 grid-template-columns: 1fr;
             }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Configuration Warning for missing env vars -->
+    <div id="configWarning" class="config-warning hidden">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div class="config-warning-content">
+            <h4>Environment Configuration Required</h4>
+            <p>Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables for production deployment.</p>
+        </div>
+    </div>
+
     <div id="toastContainer" class="toast-container"></div>
+    <div id="connectionStatus" class="connection-status disconnected">
+        <i class="fas fa-circle"></i> Disconnected
+    </div>
 
     <!-- Authentication Screen -->
     <div id="authScreen" class="auth-container">
@@ -540,7 +2101,7 @@
                     <label class="form-label">Password</label>
                     <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" required>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                <button type="submit" class="btn btn-primary" style="width: 100%;" id="loginBtn">
                     <i class="fas fa-sign-in-alt"></i> Sign In
                 </button>
             </form>
@@ -558,10 +2119,20 @@
                         <p>Admin Dashboard</p>
                     </div>
                 </div>
+                <div class="user-info">
+                    <div class="user-email" id="currentUserEmail">Loading...</div>
+                    <div class="user-role">Administrator</div>
+                </div>
             </div>
             <nav class="sidebar-nav">
                 <button class="nav-item active" onclick="showPanel('dashboard')">
                     <i class="fas fa-chart-bar"></i> Dashboard
+                </button>
+                <button class="nav-item" onclick="showPanel('templates')">
+                    <i class="fas fa-clipboard-list"></i> Question Templates
+                </button>
+                <button class="nav-item" onclick="showPanel('assessments')">
+                    <i class="fas fa-tasks"></i> Assessments
                 </button>
                 <button class="nav-item" onclick="showPanel('submissions')">
                     <i class="fas fa-file-alt"></i> Submissions
@@ -572,7 +2143,7 @@
                 <button class="nav-item" onclick="showPanel('settings')">
                     <i class="fas fa-cog"></i> Settings
                 </button>
-                <button class="nav-item" onclick="logout()" style="margin-top: auto; color: var(--error);">
+                <button class="nav-item logout" onclick="logout()">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </button>
             </nav>
@@ -583,8 +2154,13 @@
                 <!-- Dashboard Panel -->
                 <div id="dashboard-panel" class="panel active">
                     <div class="page-header">
-                        <h2>Dashboard</h2>
-                        <p>Overview of assessment activity and performance metrics</p>
+                        <div>
+                            <h2>Dashboard</h2>
+                            <p>Overview of assessment activity and performance metrics</p>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" onclick="loadDashboardStats()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
                     </div>
 
                     <div class="stats-grid">
@@ -595,19 +2171,19 @@
                                     <i class="fas fa-file-alt"></i>
                                 </div>
                             </div>
-                            <div class="stat-value">0</div>
+                            <div class="stat-value" id="totalSubmissions">0</div>
                             <div class="stat-description">All time submissions</div>
                         </div>
 
                         <div class="stat-card">
                             <div class="stat-header">
-                                <span class="stat-title">Active Assessments</span>
+                                <span class="stat-title">Active Invitations</span>
                                 <div class="stat-icon success">
-                                    <i class="fas fa-play-circle"></i>
+                                    <i class="fas fa-paper-plane"></i>
                                 </div>
                             </div>
-                            <div class="stat-value">0</div>
-                            <div class="stat-description">Currently in progress</div>
+                            <div class="stat-value" id="activeInvitations">0</div>
+                            <div class="stat-description">Pending responses</div>
                         </div>
 
                         <div class="stat-card">
@@ -617,7 +2193,7 @@
                                     <i class="fas fa-shield-alt"></i>
                                 </div>
                             </div>
-                            <div class="stat-value">0</div>
+                            <div class="stat-value" id="securityIncidents">0</div>
                             <div class="stat-description">Flagged activities</div>
                         </div>
 
@@ -628,7 +2204,7 @@
                                     <i class="fas fa-chart-line"></i>
                                 </div>
                             </div>
-                            <div class="stat-value">0%</div>
+                            <div class="stat-value" id="averageScore">0%</div>
                             <div class="stat-description">Across all submissions</div>
                         </div>
                     </div>
@@ -636,14 +2212,122 @@
                     <div class="card">
                         <div class="card-header">
                             <h3>Recent Submissions</h3>
-                            <button class="btn btn-secondary btn-sm" onclick="showToast('Info', 'Connect database to see real data', 'info')">
-                                <i class="fas fa-sync-alt"></i> Refresh
-                            </button>
                         </div>
                         <div class="card-body">
-                            <p style="text-align: center; color: var(--text-secondary); padding: 32px;">
-                                Configure your Supabase credentials to see live data
-                            </p>
+                            <div id="recentSubmissionsTable">
+                                <div class="empty-state">
+                                    <i class="fas fa-file-alt"></i>
+                                    <p>Loading recent submissions...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question Templates Panel -->
+                <div id="templates-panel" class="panel">
+                    <div class="page-header">
+                        <div>
+                            <h2>Question Templates</h2>
+                            <p>Manage reusable question templates for assessments</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="showCreateTemplateModal()">
+                            <i class="fas fa-plus"></i> Create Template
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Question Templates</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="templatesList">
+                                <div class="empty-state">
+                                    <i class="fas fa-question-circle"></i>
+                                    <p>Loading templates...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assessments Panel -->
+                <div id="assessments-panel" class="panel">
+                    <div class="page-header">
+                        <div>
+                            <h2>Assessments</h2>
+                            <p>Create and manage assessment configurations</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="showCreateAssessmentModal()">
+                            <i class="fas fa-plus"></i> Create Assessment
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Assessment Configurations</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="assessmentsList">
+                                <div class="empty-state">
+                                    <i class="fas fa-tasks"></i>
+                                    <p>Loading assessments...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submissions Panel -->
+                <div id="submissions-panel" class="panel">
+                    <div class="page-header">
+                        <div>
+                            <h2>Submissions</h2>
+                            <p>Review candidate submissions and performance</p>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" onclick="loadSubmissions()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>All Submissions</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="submissionsTable">
+                                <div class="empty-state">
+                                    <i class="fas fa-file-alt"></i>
+                                    <p>Loading submissions...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Invitations Panel -->
+                <div id="invitations-panel" class="panel">
+                    <div class="page-header">
+                        <div>
+                            <h2>Invitations</h2>
+                            <p>Send and manage assessment invitations</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="showCreateInvitationModal()">
+                            <i class="fas fa-plus"></i> Create Invitation
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>All Invitations</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="invitationsTable">
+                                <div class="empty-state">
+                                    <i class="fas fa-envelope"></i>
+                                    <p>Loading invitations...</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -651,117 +2335,27 @@
                 <!-- Settings Panel -->
                 <div id="settings-panel" class="panel">
                     <div class="page-header">
-                        <h2>Settings</h2>
-                        <p>Configure platform settings and integrations</p>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>Database Configuration</h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="form-group">
-                                <label class="form-label">Supabase URL</label>
-                                <input type="url" id="supabaseUrl" class="form-input" placeholder="https://your-project.supabase.co">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Supabase Anon Key</label>
-                                <input type="password" id="supabaseKey" class="form-input" placeholder="Enter anon key">
-                                <small style="color: var(--text-secondary); font-size: 12px;">Use anon key only - never service role key in frontend!</small>
-                            </div>
-                            <button onclick="updateConfig()" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Update Configuration
-                            </button>
+                        <div>
+                            <h2>Settings</h2>
+                            <p>Configure platform settings and integrations</p>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        // Simple configuration for demo
-        let currentPanel = 'dashboard';
-        let currentUser = null;
-
-        function showToast(title, message, type = 'success', duration = 5000) {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            
-            toast.innerHTML = `
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${title}</div>
-                    <div style="font-size: 13px; color: var(--text-secondary);">${message}</div>
-                </div>
-                <button onclick="this.parentElement.remove()" style="background: none; border: none; cursor: pointer; padding: 4px; color: var(--text-secondary);">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-
-            container.appendChild(toast);
-
-            if (duration > 0) {
-                setTimeout(() => {
-                    if (toast.parentElement) {
-                        toast.remove();
-                    }
-                }, duration);
-            }
-        }
-
-        function showPanel(panelName) {
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            document.querySelectorAll('.panel').forEach(panel => {
-                panel.classList.remove('active');
-            });
-
-            event.target.classList.add('active');
-            document.getElementById(`${panelName}-panel`).classList.add('active');
-            currentPanel = panelName;
-        }
-
-        function updateConfig() {
-            const url = document.getElementById('supabaseUrl').value;
-            const key = document.getElementById('supabaseKey').value;
-            
-            if (url && key) {
-                showToast('Success', 'Configuration updated! Deploy with your Edge Functions for full functionality.', 'success');
-            } else {
-                showToast('Error', 'Please fill in all fields', 'error');
-            }
-        }
-
-        function logout() {
-            currentUser = null;
-            document.getElementById('authScreen').classList.remove('hidden');
-            document.getElementById('dashboardScreen').classList.add('hidden');
-            showToast('Logged Out', 'You have been logged out', 'info');
-        }
-
-        // Login handler
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            if (email === 'admin@demo.com' && password === 'demo123') {
-                currentUser = { email };
-                document.getElementById('authScreen').classList.add('hidden');
-                document.getElementById('dashboardScreen').classList.remove('hidden');
-                showToast('Login Successful', 'Welcome to the admin dashboard', 'success');
-            } else {
-                showToast('Login Failed', 'Invalid credentials. Use admin@demo.com / demo123 for demo', 'error');
-            }
-        });
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            showToast('Demo Mode', 'Use admin@demo.com / demo123 to login', 'info', 8000);
-        });
-    </script>
-</body>
-</html>
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Company Settings</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">Company Name</label>
+                                    <input type="text" id="companyName" class="form-input" placeholder="Your Company">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Platform Branding</label>
+                                    <input type="text" id="platformBranding" class="form-input" value="TechAssess Pro">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Default Duration (minutes)</label>
+                                    <input type="number" id="defaultDuration" class="form-input" value="60" min="5" max="300">
+                                </div>
