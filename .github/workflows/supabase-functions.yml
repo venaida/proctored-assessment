@@ -38,3 +38,5 @@ jobs:
           supabase functions deploy admin-create-invitation
           supabase functions deploy admin-submissions
           supabase functions deploy admin-invitations
+          supabase functions deploy get-assessment
+          supabase functions deploy submit-assessment
