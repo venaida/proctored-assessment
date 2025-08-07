@@ -1,0 +1,11 @@
+// -----------------------------------------------------------------------------
+// IMPORTANT: DO NOT COMMIT THIS FILE WITH YOUR KEYS!
+// -----------------------------------------------------------------------------
+// 1. Create a new file in this directory named `config.js`.
+// 2. Copy the content of this file into `config.js`.
+// 3. Fill in your actual Supabase URL and Anonymous Key below.
+// 4. The `.gitignore` file is set up to ignore `config.js`, keeping your keys safe.
+// -----------------------------------------------------------------------------
+
+export const SUPABASE_URL = "https://your-project-url.supabase.co";
+export const SUPABASE_ANON_KEY = "your-supabase-anon-key";
