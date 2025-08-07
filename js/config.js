@@ -1,0 +1,2 @@
+export const SUPABASE_URL = "https://ytoidmelmialrjfqyhet.supabase.co";
+export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0b2lkbWVsbWlhbHJqZnF5aGV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzMTg3NzYsImV4cCI6MjA2OTg5NDc3Nn0.4D_ohY9wqeBb8Rod8dlhrn5Jjl10QNzU-AeCDHUixv4";
